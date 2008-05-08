@@ -10,16 +10,11 @@ else
 endif
 
 # Base rules.
-all: base $(OUT)
+all: $(OUT)
 
 clean:
 	-rm -f $(OUT)
 	-rm -f objs/*.o *~ .depend
-
-base: objs/util.o
-
-objs/util.o: base/util.cc
-	$(CPP) $(CPPFLAGS) -c -o $@ base/util.cc
 
 # Project build rules.
 

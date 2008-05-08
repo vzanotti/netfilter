@@ -1,38 +1,27 @@
 CPP      = g++
-CPPFLAGS = -Wall -I.
+CPPFLAGS = -Wall -Werror -Wformat -I.
 LDFLAGS  =
 OUT      =
 
 ifdef DEBUG
-  CPPFLAGS += -g -fprofile-arcs -ftest-coverage
+  CPPFLAGS += -g
 else
   CPPFLAGS += -O2 -pipe -Wuninitialized
 endif
 
-.PHONY: all clean clean_objs
+# Base rules.
+all: base $(OUT)
 
-# Build rules
-all: objs base $(OUT)
-
-objs:
-	mkdir -p objs
-
-base: objs/atomicops-x86.o
-
-objs/atomicops-x86.o: base/atomicops-internals-x86.cc
-	$(CPP) $(CPPFLAGS) -c $(LDFLAGS) -o objs/atomicops-x86.o base/atomicops-internals-x86.cc
-
-# Implicit rules
-.SUFFIXES: .cc
-
-clean: clean_objs
+clean:
 	-rm -f $(OUT)
-
-clean_objs:
 	-rm -f objs/*.o *~ .depend
 
-.cc.o:
-	$(CPP) -c $(CPPFLAGS) -o objs/$@ $<
+base: objs/util.o
+
+objs/util.o: base/util.cc
+	$(CPP) $(CPPFLAGS) -c -o $@ base/util.cc
+
+# Project build rules.
 
 # TODO(vincent): uncomment the following lines when source files will be available.
 # .depend: $(SRC_FILES)

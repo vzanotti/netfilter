@@ -33,6 +33,7 @@
 #include <inttypes.h>           // uint16_t might be here; PRId64 too.
 #include <stddef.h>             // to get size_t
 #include <stdint.h>             // to get uint16_t (ISO naming madness)
+#include <string>
 
 // Standard typedefs
 // All Google code is compiled with -funsigned-char to make "char"

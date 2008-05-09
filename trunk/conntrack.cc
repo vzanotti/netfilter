@@ -102,6 +102,12 @@ void Connection::update_packet_repl(const char* data, int32 data_len) {
 void Connection::update_packet(bool orig, const char* data, int32 data_len) {
   CHECK(data_len >= 0);
 
+  // If classification is definitive, stops the packet processing.
+  if (definitive_mark_) {
+    return;
+  }
+
+  // Appends data to the ingress/egress buffers.
   if (orig) {
     packets_egress_++;
     bytes_egress_ += data_len;
@@ -112,9 +118,32 @@ void Connection::update_packet(bool orig, const char* data, int32 data_len) {
     buffer_ingress_.append(data, data_len);
   }
 
-  // TODO: update classifier !
-  // TODO: shrink buffer using classifier hints.
-  // TODO: switch to NO_MATCH mode if the buffer_size is above kMaxBytes.
+  // Calls the classifier for status update; it returns the status of the
+  // classification. If it is definitive, tears down the classifier.
+  bool classified = false; // TODO: classifier->update();
+  // TODO: classification_mark_ = classifier->classification_mark();
+  if (classified) {
+    set_definitive_classification();
+    return;
+  }
+
+  // Asks the classifier for buffer hints, and shrinks the buffer where needed.
+  uint32 hint_egress = 0; // classifier->egress_hint();
+  uint32 hint_ingress = 0; // classifier->ingress_hint();
+
+  if (hint_egress > (bytes_egress_ - buffer_egress_.size())) {
+    // TODO: shrink egress buffer
+  }
+  if (hint_ingress > (bytes_ingress_ - buffer_ingress_.size())) {
+    // TODO: shrink ingress buffer
+  }
+
+  // If buffers grow above a threshold, kill the classification.
+  if (buffer_ingress_.size() > kMaxBufferSize ||
+      buffer_egress_.size() > kMaxBufferSize) {
+    classification_mark_ = Classifier::kNoMatch;
+    set_definitive_classification();
+  }
 }
 
 Connection* Connection::get_reversed_connection() {
@@ -129,6 +158,13 @@ Connection* Connection::get_reversed_connection() {
   conn->buffer_egress_ = conn->buffer_ingress_;
 
   return conn;
+}
+
+void Connection::set_definitive_classification() {
+  // TODO: classifier tear-down.
+  buffer_ingress_.clear();
+  buffer_egress_.clear();
+  definitive_mark_ = true;
 }
 
 //

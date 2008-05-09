@@ -108,10 +108,10 @@ class Connection {
   // Content received so far; packets_* and bytes_* stores real numbers.
   // Buffers only store the last received bytes: it actually stores bytes
   // from the [bytes_*gress - buffer_*gress.size();bytes_*gress[.
-  int32 packets_egress_;
-  int32 packets_ingress_;
-  int32 bytes_egress_;
-  int32 bytes_ingress_;
+  uint32 packets_egress_;
+  uint32 packets_ingress_;
+  uint32 bytes_egress_;
+  uint32 bytes_ingress_;
   string buffer_egress_;
   string buffer_ingress_;
 

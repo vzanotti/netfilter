@@ -29,7 +29,7 @@
 //
 // Connection tracking key creation helpers.
 //
-static char* kProtoNames[IPPROTO_MAX];
+static const char* kProtoNames[IPPROTO_MAX];
 
 // Initializes the protocol-to-name conversion table.
 void kProtoNames_initializer() {

@@ -41,7 +41,7 @@ class Connection {
  public:
   // Limits above which the classifier is destroyed, and the connection is
   // classified as "unmatched".
-  static const int32 kMaxBytes = 12000;
+  static const uint32 kMaxBufferSize = 16 * (1 << 10);  // 16k
 
   // TODO: add comments, and @p classifier.
   explicit Connection(bool conntracked);
@@ -93,14 +93,21 @@ class Connection {
   // Really updates the Connection (Cf. update_packet_* above).
   void update_packet(bool orig, const char* data, int32 data_len);
 
+  // Tears down the classifier and the buffers (called on definitive
+  // classification).
+  void set_definitive_classification();
+
   // Indicates if the connection have already be seen by ConnTrack.
   bool conntracked_;
 
   // Stores the current rule match. This number is an opaque number from the
   // classifier, and is supposed to be the NFQUEUE verdict mark.
   int32 classification_mark_;
+  bool definitive_mark_;
 
-  // Content received so far.
+  // Content received so far; packets_* and bytes_* stores real numbers.
+  // Buffers only store the last received bytes: it actually stores bytes
+  // from the [bytes_*gress - buffer_*gress.size();bytes_*gress[.
   int32 packets_egress_;
   int32 packets_ingress_;
   int32 bytes_egress_;

@@ -132,10 +132,22 @@ void Connection::update_packet(bool orig, const char* data, int32 data_len) {
   uint32 hint_ingress = 0; // classifier->ingress_hint();
 
   if (hint_egress > (bytes_egress_ - buffer_egress_.size())) {
-    // TODO: shrink egress buffer
+    CHECK(hint_egress <= bytes_egress_);
+    int32 new_buffer_size = bytes_egress_ - hint_egress;
+    int32 new_buffer_start = buffer_egress_.size() - new_buffer_size;
+
+    string new_buffer(buffer_egress_.data() + new_buffer_start,
+                      new_buffer_size);
+    buffer_egress_.swap(new_buffer);
   }
   if (hint_ingress > (bytes_ingress_ - buffer_ingress_.size())) {
-    // TODO: shrink ingress buffer
+    CHECK(hint_ingress <= bytes_ingress_);
+    int32 new_buffer_size = bytes_ingress_ - hint_ingress;
+    int32 new_buffer_start = buffer_ingress_.size() - new_buffer_size;
+
+    string new_buffer(buffer_ingress_.data() + new_buffer_start,
+                      new_buffer_size);
+    buffer_ingress_.swap(new_buffer);
   }
 
   // If buffers grow above a threshold, kill the classification.

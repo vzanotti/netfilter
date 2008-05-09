@@ -134,9 +134,8 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
   uint32 packet_mark = nfq_get_nfmark(nf_data);
   pair<uint32, uint32> packet_submarks = get_submarks_from_mark(packet_mark);
 
-  // Fetches the raw packet, and determines conntrack keys.
-  // Also accepts without any further processing unhandled packets (only udp
-  // and tcp packets in IPv4 or IPv6 are processed).
+  // Fetches the raw packet, and stops processing packets we don't want to
+  // handle (at this time, we're only able to process ipv4/ipv6 tcp/udp).
   char* packet_data;
   int packet_length = nfq_get_payload(nf_data, &packet_data);
   if (packet_length < 0) {
@@ -151,9 +150,16 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
     return nfq_set_verdict(queue_handle, 0, NF_ACCEPT, 0, NULL);
   }
 
-  pair<string, string> conntrack_keys = conntrack_->get_packet_keys(packet);
+  // Drops packets without any payload; these packets are usually TCP control
+  // packets (SYN, SYN ACK, RST, ...), which will only confuse the conntrack
+  // matcher).
+  if (packet.payload_size() <= 0) {
+    return nfq_set_verdict(queue_handle, 0, NF_ACCEPT, 0, NULL);
+  }
 
-  // Finds the conntrack entry for the packet (if it exists
+  // Determines the conntrack keys for the packet, and fetches the corresponding
+  // Connection object from the conntrack table.
+  pair<string, string> conntrack_keys = conntrack_->get_packet_keys(packet);
   bool direction_orig = true;
   Connection* connection =
       conntrack_->get_connection_or_create(conntrack_keys, direction_orig);

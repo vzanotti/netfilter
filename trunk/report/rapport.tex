@@ -1,0 +1,40 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[official]{eurosym}
+\usepackage{hyperref}
+
+%opening
+\title{Développement d’un module Netfilter de filtrage applicatif}
+\author{Stéphane \textsc{Jacob} - John \textsc{Whitbeck} - Vincent \textsc{Zanotti}}
+\date{15 mai 2008}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+\input{intro.tex}
+
+\section{But}
+\input{but.tex}
+\newpage
+
+\section{Implémentation}
+\input{implementation.tex}
+
+\section*{Conclusion}
+\input{concl.tex}
+
+\nocite{RW}
+\nocite{l7}
+\nocite{C}
+\nocite{S}
+
+\newpage
+\bibliography{biblio}{}
+\bibliographystyle{amsalpha}
+\addcontentsline{toc}{section}{\numberline{}Références}
+
+\end{document}

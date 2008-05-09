@@ -27,8 +27,10 @@
 #include "packet.h"
 #include <map>
 #include <netinet/in.h>
+extern "C" {
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
+}
 
 using std::map;
 using std::pair;

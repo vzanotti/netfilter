@@ -22,7 +22,9 @@
 #define QUEUE_H__
 
 #include "conntrack.h"
+extern "C" {
 #include <libnetfilter_queue/libnetfilter_queue.h>
+}
 
 // TODO: add comments
 class Queue {

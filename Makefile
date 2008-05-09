@@ -1,5 +1,5 @@
 CPP      = g++
-CPPFLAGS = -Wall -Werror -Wformat -I.
+CPPFLAGS = -funsigned-char -Wall -Werror -Wformat -I.
 LDFLAGS  =
 OUT      =
 
@@ -10,16 +10,21 @@ else
 endif
 
 # Base rules.
-all: $(OUT)
+all: base $(OUT)
 
 clean:
 	-rm -f $(OUT)
 	-rm -f objs/*.o *~ .depend
 
-# Project build rules.
+base: objs/atomics.o objs/logging.o objs/util.o
 
-# TODO(vincent): uncomment the following lines when source files will be available.
-# .depend: $(SRC_FILES)
-# 	$(CPP) -MM $^ > $@
-#
-# include .depend
+objs/atomics.o: base/atomicops-internals-x86.cc base/atomicops-internals-x86.h base/atomicops.h
+	$(CPP) $(CPPFLAGS) -c -o $@ base/atomicops-internals-x86.cc
+
+objs/logging.o: base/logging.cc base/logging.h
+	$(CPP) $(CPPFLAGS) -c -o $@ base/logging.cc
+
+objs/util.o: base/util.cc base/util.h
+	$(CPP) $(CPPFLAGS) -c -o $@ base/util.cc
+
+# Project build rules.

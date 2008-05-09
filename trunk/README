@@ -19,4 +19,21 @@ Dependencies:
   libnetfilter-queue (http://www.netfilter.org/projects/libnetfilter_queue/)
   libnetfilter-conntrack (http://www.netfilter.org/projects/libnetfilter_conntrack/)
   in-kernel support for nf_conntrack, nfnetlink, nfnetlink_queue, and nf_conntrack_netlink
+  kernel >= 2.6.18
   google-gflags (http://code.google.com/p/google-gflags/)
+
+  How to install dependencies on Debian:
+    apt-get libnetfilter-conntrack-dev libnetfilter-queue-dev
+    wget http://google-gflags.googlecode.com/files/libgoogle-gflags-dev_0.8-1_i386.deb
+    wget http://google-gflags.googlecode.com/files/libgoogle-gflags0_0.8-1_i386.deb
+    dpkg -i libgoogle-gflags-dev_0.8-1_i386.deb libgoogle-gflags0_0.8-1_i386.deb
+
+  How to install dependencies on Fedora Core:
+    yum install libnetfilter_conntrack-devel libnetfilter_queue-devel
+    wget http://google-gflags.googlecode.com/files/gflags-devel-0.8-1.i386.rpm
+    wget http://google-gflags.googlecode.com/files/gflags-0.8-1.i386.rpm
+    yum --nogpgcheck localinstall gflags-devel-0.8-1.i386.rpm gflags-0.8-1.i386.rpm
+
+  How to install dependencies on Gentoo:
+    echo "dev-cpp/gflags ~amd64" >> /etc/portage/package.keywords
+    emerge -va net-libs/libnetfilter_queue net-libs/libnetfilter_conntrack dev-cpp/gflags

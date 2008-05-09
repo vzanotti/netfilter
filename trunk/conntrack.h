@@ -124,7 +124,7 @@ class Connection {
 class ConnTrack {
  public:
   // Static data used to compute the key.
-  static char* kProtoNames[IPPROTO_MAX];
+  static const char* kProtoNames[IPPROTO_MAX];
 
   // Sets up the conntrack event listener, and register the @p classifier for
   // future connections.

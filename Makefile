@@ -1,7 +1,7 @@
 CPP      = g++
 CPPFLAGS = -funsigned-char -Wall -Werror -Wformat -I.
-LDFLAGS  = -lnfnetlink -lgflags -lnetfilter_conntrack -lnetfilter_queue
-OUT      = url-filter
+LDFLAGS  = -lpthread -lgflags -lnfnetlink -lnetfilter_conntrack -lnetfilter_queue
+OUT      = urlfilter
 
 ifdef DEBUG
   CPPFLAGS += -g
@@ -37,7 +37,8 @@ objs/packet.o: packet.cc packet.h
 objs/queue.o: queue.cc queue.h
 	$(CPP) $(CPPFLAGS) -c -o $@ queue.cc
 
-url-filter: objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/logging.o objs/util.o
+urlfilter: urlfilter.cc objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/logging.o objs/util.o
+	$(CPP) $(CPPFLAGS) $(LDFLAGS) -o $@ $+
 
 # Report.
 report: report/rapport.pdf

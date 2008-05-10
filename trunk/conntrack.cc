@@ -184,7 +184,9 @@ void Connection::set_definitive_classification() {
 //
 ConnTrack::ConnTrack() : connections_(), connections_lock_() {
   // Sets up the conntrack events listener.
-  conntrack_event_handler_ = nfct_open(CONNTRACK, NFCT_ALL_CT_GROUPS);
+  conntrack_event_handler_ = nfct_open(
+      CONNTRACK,
+      NF_NETLINK_CONNTRACK_NEW | NF_NETLINK_CONNTRACK_DESTROY);
   if (!conntrack_event_handler_) {
     LOG(FATAL, "Unable to set up the conntrack event listener. "
                "Either you don't have root privileges, or there is no "
@@ -206,10 +208,11 @@ ConnTrack::~ConnTrack() {
 }
 
 void ConnTrack::Run() {
-  nfct_callback_register(conntrack_event_handler_,
-                         NFCT_T_ALL,
-                         ConnTrack::conntrack_callback,
-                         static_cast<void*>(this));
+  nfct_callback_register(
+      conntrack_event_handler_,
+      static_cast<nf_conntrack_msg_type>(NFCT_T_NEW | NFCT_T_DESTROY),
+      ConnTrack::conntrack_callback,
+      static_cast<void*>(this));
 
   int result = nfct_catch(conntrack_event_handler_);
   if (result == -1) {

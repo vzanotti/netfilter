@@ -139,7 +139,7 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
   char* packet_data;
   int packet_length = nfq_get_payload(nf_data, &packet_data);
   if (packet_length < 0) {
-    return nfq_set_verdict(queue_handle, 0, NF_ACCEPT, 0, NULL);
+    return nfq_set_verdict(queue_handle, packet_id, NF_ACCEPT, 0, NULL);
   }
 
   Packet packet(packet_data, packet_length);
@@ -147,14 +147,14 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
        packet.l3_protocol() != 6) ||
       (packet.l4_protocol() != IPPROTO_TCP &&
        packet.l4_protocol() != IPPROTO_UDP)) {
-    return nfq_set_verdict(queue_handle, 0, NF_ACCEPT, 0, NULL);
+    return nfq_set_verdict(queue_handle, packet_id, NF_ACCEPT, 0, NULL);
   }
 
   // Drops packets without any payload; these packets are usually TCP control
   // packets (SYN, SYN ACK, RST, ...), which will only confuse the conntrack
   // matcher).
   if (packet.payload_size() <= 0) {
-    return nfq_set_verdict(queue_handle, 0, NF_ACCEPT, 0, NULL);
+    return nfq_set_verdict(queue_handle, packet_id, NF_ACCEPT, 0, NULL);
   }
 
   // Determines the conntrack keys for the packet, and fetches the corresponding

@@ -182,7 +182,10 @@ void Connection::set_definitive_classification() {
 //
 // Implementation of the ConnTrack class.
 //
-ConnTrack::ConnTrack() : connections_(), connections_lock_() {
+ConnTrack::ConnTrack()
+    : connections_(),
+      connections_lock_(),
+      must_stop_(false) {
   // Sets up the conntrack events listener.
   conntrack_event_handler_ = nfct_open(
       CONNTRACK,
@@ -224,6 +227,10 @@ void ConnTrack::Run() {
     nfct_close(conntrack_event_handler_);
     conntrack_event_handler_ = NULL;
   }
+}
+
+void ConnTrack::Stop() {
+  must_stop_ = true;
 }
 
 bool ConnTrack::has_connection(const string& key) {
@@ -308,6 +315,9 @@ int ConnTrack::conntrack_callback(nf_conntrack_msg_type type,
                                   void* conntrack_object) {
   ConnTrack* conntrack = reinterpret_cast<ConnTrack*>(conntrack_object);
   if (conntrack) {
+    if (conntrack->must_stop_) {
+      return NFCT_CB_STOP;
+    }
     return conntrack->handle_conntrack_event(type, conntrack_event);
   }
 

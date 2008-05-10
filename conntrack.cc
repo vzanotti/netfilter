@@ -364,14 +364,14 @@ string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event) {
   uint8 l3_proto = nfct_get_attr_u8(conntrack_event, ATTR_L3PROTO);
   string l3_conntrack;
 
-  if (l3_proto == 4) {
+  if (l3_proto == AF_INET) {
     uint32 src_address = nfct_get_attr_u32(conntrack_event, ATTR_IPV4_SRC);
     uint32 dst_address = nfct_get_attr_u32(conntrack_event, ATTR_IPV4_DST);
     l3_conntrack = StringPrintf(
         "src=%s dst=%s",
         sprintf_ipv4_address(src_address).c_str(),
         sprintf_ipv4_address(dst_address).c_str());
-  } else if (l3_proto == 6) {
+  } else if (l3_proto == AF_INET6) {
     const void* src_address = nfct_get_attr(conntrack_event, ATTR_IPV6_SRC);
     const void* dst_address = nfct_get_attr(conntrack_event, ATTR_IPV6_DST);
     l3_conntrack = StringPrintf(
@@ -383,8 +383,8 @@ string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event) {
   }
 
   uint8 l4_proto = nfct_get_attr_u8(conntrack_event, ATTR_L4PROTO);
-  uint16 src_port = nfct_get_attr_u8(conntrack_event, ATTR_PORT_SRC);
-  uint16 dst_port = nfct_get_attr_u8(conntrack_event, ATTR_PORT_DST);
+  uint16 src_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_SRC));
+  uint16 dst_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_DST));
   return StringPrintf("%s %s sport=%d dport=%d",
                       sprintf_protocol(l4_proto).c_str(),
                       l3_conntrack.c_str(),

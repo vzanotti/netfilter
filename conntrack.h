@@ -142,6 +142,7 @@ class ConnTrack {
 
   // Starts the conntrack event listener; only returns on failure.
   void Run();
+  void Stop();
 
   // Returns true iff the given conntrack key is associated with an existing
   // connection.
@@ -190,6 +191,7 @@ class ConnTrack {
   // Connection storage, and mutex.
   map<string, Connection*> connections_;
   Mutex connections_lock_;
+  bool must_stop_;
 
   DISALLOW_EVIL_CONSTRUCTORS(ConnTrack);
 };

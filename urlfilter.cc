@@ -20,6 +20,7 @@
 #include "conntrack.h"
 #include "queue.h"
 #include <pthread.h>
+#include <signal.h>
 #include <google/gflags.h>
 
 DEFINE_int32(queue, 0,
@@ -60,6 +61,34 @@ pthread_t start_queuehandler_thread(Queue* queue) {
   return thread_id;
 }
 
+// Sets up a signal handler to gracefully stop the urlfilter on SIGQUIT/SIGINT.
+ConnTrack* __signal_handler_conntrack = NULL;
+Queue* __signal_handler_queue = NULL;
+void signal_handler(int signum) {
+  if (signum == SIGINT || signum == SIGQUIT) {
+    LOG(INFO, "Received signal %s, stopping.",
+        (signum == SIGINT ? "SIGINT" : "SIGQUIT"));
+
+    if (__signal_handler_conntrack) {
+      __signal_handler_conntrack->Stop();
+    }
+    if (__signal_handler_queue) {
+      __signal_handler_queue->Stop();
+    }
+
+    // Restores the signal handler to its default value, so as to make sure
+    // a second SIGINT/SIGQUIT signal will be effective.
+    signal(signum, SIG_DFL);
+  }
+}
+
+void setup_signal_handler(ConnTrack* conntrack, Queue* queue) {
+  __signal_handler_conntrack = conntrack;
+  __signal_handler_queue = queue;
+  signal(SIGINT, &signal_handler);
+  signal(SIGQUIT, &signal_handler);
+}
+
 int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -73,6 +102,9 @@ int main(int argc, char** argv) {
   // Prepares and starts the queue thread.
   Queue queue(FLAGS_queue, FLAGS_mark_mask, &conntrack);
   pthread_t queue_thread = start_queuehandler_thread(&queue);
+
+  // Sets up the signals handler.
+  setup_signal_handler(&conntrack, &queue);
 
   // Waits for the two threads to terminate.
   pthread_join(conntrack_thread, NULL);

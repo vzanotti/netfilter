@@ -90,13 +90,17 @@ void Queue::Run() {
 
   int received;
   char buffer[kBufferSize];
-  for (; (received = recv(fd, buffer, kBufferSize, 0)) && received >= 0;) {
+  for (; (received = recv(fd, buffer, kBufferSize, 0)) >= 0 && !must_stop_;) {
     nfq_handle_packet(queue_handle_, buffer, received);
   }
 
   // Unbinds from our NFQUEUE.
   nfq_destroy_queue(queue_socket_);
   queue_socket_ = NULL;
+}
+
+void Queue::Stop() {
+  must_stop_ = true;
 }
 
 int Queue::queue_callback(nfq_q_handle* queue_handle,

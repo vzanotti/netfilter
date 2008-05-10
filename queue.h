@@ -40,6 +40,7 @@ class Queue {
 
   // Starts the queue listener; only returns on failure.
   void Run();
+  void Stop();
 
   // Static callback for the queue packet listerner.
   // Calls the handle_packet of the @p queue_object, or accepts the packet
@@ -74,6 +75,7 @@ class Queue {
   // Queue listener handler.
   nfq_handle* queue_handle_;
   nfq_q_handle* queue_socket_;
+  bool must_stop_;
 
   DISALLOW_EVIL_CONSTRUCTORS(Queue);
 };

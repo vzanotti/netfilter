@@ -88,7 +88,8 @@ class Connection {
     }
   }
   void Destroy() {
-    AtomicIncrement(&ref_counter_, -1);
+    content_lock_.Lock();
+    Release();
   }
 
  private:

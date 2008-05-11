@@ -203,9 +203,12 @@ ConnTrack::~ConnTrack() {
     conntrack_event_handler_ = NULL;
   }
 
+  WriterMutexLock ml(&connections_lock_);
   for (map<string, Connection*>::iterator it = connections_.begin();
        it != connections_.end(); ++it)  {
-    it->second->Destroy();
+    if (it->second != NULL) {
+      it->second->Destroy();
+    }
   }
   connections_.clear();
 }

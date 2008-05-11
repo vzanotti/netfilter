@@ -24,7 +24,8 @@
 
 Queue::Queue(int queue, uint32 mark_mask, ConnTrack* conntrack)
   : conntrack_(conntrack), queue_(queue),
-    queue_handle_(NULL), queue_socket_(NULL) {
+    queue_handle_(NULL), queue_socket_(NULL),
+    must_stop_(false) {
   if (!set_mark_mask(mark_mask)) {
     LOG(FATAL, "The mark mask must only have consecutive bits on. "
                "Eg. 0x0ff0 is correct, while 0xf0f0 is not.");

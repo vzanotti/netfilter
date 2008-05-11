@@ -1,11 +1,11 @@
 \subsection*{Organisation du programme}
 Le projet contient :
 \begin{itemize}
-\item un README, avec le mode d'emploi pour installer les dépendances ;
+\item un \verb+README+, avec le mode d'emploi pour installer les dépendances ;
 \item un répertoire base/ avec plusieurs librairies externes (sous
 licences compatibles GPLv2) ;
 \item un fichier de configuration ;
-\item \verb+queue.h/cc+, \verb+packet.h/cc+ et \verb+conntrack.h/cc+ qui réalisent l'interception des paquets envoyés à NFQUEUE (\verb+queue.cc+), leur
+\item \verb+queue.h/cc+, \verb+packet.h/cc+ et \verb+conntrack.h/cc+ qui réalisent l'interception des paquets envoyés à \verb+NFQUEUE+ (\verb+queue.cc+), leur
 interprétation (\verb+packet.cc+), et leur mise en relation avec un conntrack
 (\verb+conntrack.cc+) ;
 \item \verb+classifier.h/cc+ qui sert à classer les paquets ;
@@ -22,7 +22,7 @@ nfnetlink, reçoit les mises à jour de la table conntrack du noyau, et
 maintient une copie locale.\\
 
 Le deuxième (cf. \verb+Queue::Run()+) intercepte les paquets arrivant sur une
-NFQUEUE (via \verb+iptables+), les parse, détermine l'entrée conntrack
+\verb+NFQUEUE+ (via \verb+iptables+), les parse, détermine l'entrée conntrack
 correspondante (en demandant à une table partagée avec l'autre
 thread), récupère l'object "Connection" correspondant, met à jour les
 deux buffers, puis appelle la méthode \verb+update+ du classifier; enfin il
@@ -33,14 +33,24 @@ Le classifier regarde les buffers d'une connection à chaque fois que les buffer
 partie du buffer lui est encore utile, pour que le conntrack puisse
 purger la partie inutile du buffer.\\
 
-*****Je vais essayer de faire deux jolis schémas: un avec le fonctionnement
-de l'appli (les deux threads, la base "conntrack" des connections, le
-chemin des paquets vers le classifier), et un deuxième avec le schéma
-des flux au niveau de netfilter (les paquets sont interceptés par un
-règle iptables qui les "-j NFQUEUE"; là ils sont récupérés en
-userspace, markés, et relâchés dans le noyau; à ce moment la une règle
-iptables sur POSTROUTING peut leur faire un sort (ou, au choix, on
-peut leur appliquer de la QoS -- Cf doc de l7-filter-userspace).*****
+
+
+Le cheminement des paquets, avec une extension en userspace, sera le suivant :\\
+filtrage iptables et envoi vers la target \verb+NFQUEUE+\\
+\verb+->+ récupération par le démon userspace, classification, et apposition d'une mark\\
+\verb+->+ retour dans le noyau vers la chaîne \verb+iptables+ suivante (\verb+POSTROUTING+ par exemple si le paquet a été intercepté dans la chaine \verb+FORWARD+)\\
+\verb+->+ éventuel refiltrage (en utilisant \verb+-m mark+ pour filtrer sur la mark).
+
+
+%*****Je vais essayer de faire deux jolis schémas: un avec le fonctionnement
+%de l'appli (les deux threads, la base "conntrack" des connections, le
+%chemin des paquets vers le classifier), et un deuxième avec le schéma
+%des flux au niveau de netfilter (les paquets sont interceptés par un
+%règle iptables qui les "-j NFQUEUE"; là ils sont récupérés en
+%userspace, markés, et relâchés dans le noyau; à ce moment la une règle
+%iptables sur POSTROUTING peut leur faire un sort (ou, au choix, on
+%peut leur appliquer de la QoS -- Cf doc de l7-filter-userspace).*****
+%s'inspirer de http://l7-filter.sourceforge.net/PacketFlow.png
 
 \subsection*{Quelques remarques et comparaisons avec l7-filter}
 Le l7-filter userspace utilisait un conntrack fait main alors que nous utilisons le conntrack du noyau. Cela devrait être plus efficace parce que cela permettra dans quasiment tous les cas de savoir qui est le client qui est le serveur à l'exception du cas où un paquet arrive sur /queue/ avant que l'information de conntrack n'arrive dans l'autre thread.\\

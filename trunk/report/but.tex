@@ -6,11 +6,11 @@ Les développements seront sous licence libre de type GNU GPL ou BSD.
 
 L'idée est donc d'arriver à :
 \begin{itemize}
-\item \verb+iptables -A FORWARD -p tcp -m webfilter --function get+\\ \verb+--urlsizemax 255 -j ACCEPT+ : le module "webfilter" n'autorise que la fonction GET avec une URL de taille max 255 ;
+\item \verb+iptables -A FORWARD -p tcp -m webfilter --function get+\\ \verb+--urlsizemax 255 -j ACCEPT+ : le module "webfilter" n'autorise que la fonction \verb+GET+ avec une URL de taille max 255 ;
 \item \verb+iptables -A FORWARD -p tcp -m ftpfilter --function get+\\
 \verb+--filetype pdf -j ACCEPT+\\
 \verb+iptables -A FORWARD -p tcp -m ftpfilter --function list+\\
-\verb+--filetype pdf -j ACCEPT+ : le module "webfilter" n'autorise que les fonctions LIST et GET sur fichiers PDF.
+\verb+--filetype pdf -j ACCEPT+ : le module "webfilter" n'autorise que les fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF.
 \end{itemize}
 
 La possibilité de journaliser les évènements est aussi importante, la cause du rejet d'une requête doit être spécifiée (exemple : URL de taille $>$ 255) 

@@ -37,3 +37,16 @@ Dependencies:
   How to install dependencies on Gentoo:
     echo "dev-cpp/gflags ~amd64" >> /etc/portage/package.keywords
     emerge -va net-libs/libnetfilter_queue net-libs/libnetfilter_conntrack dev-cpp/gflags
+
+Netfilter/iptable configuration example:
+  A basic iptables configuration could be:
+    # Redirects all packets to and from port 80 to the urlfilter.
+    iptables -A FORWARD -m tcp -p tcp --dport 80 -j NFQUEUE --queue-num 0
+    iptables -A FORWARD -m tcp -p tcp --sport 80 -j NFQUEUE --queue-num 0
+
+    # Matches mark on post-filter (let us suppose that 0-2 is no match,
+    # 3 is url above 255 chars, and 4 is url ending with .pdf).
+    # We have to use a chain downstream to the initial matching rule
+    # (mangle/POSTROUTING is after filter/FORWARD).
+    iptables -t mangle -A POSTROUTING -m mark --mark 3 -j LOG --log-prefix "Url too long "
+    iptables -t mangle -A POSTROUTING -m mark --mark 4 -j REJECT

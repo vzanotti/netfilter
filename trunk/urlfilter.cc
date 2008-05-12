@@ -90,6 +90,12 @@ void setup_signal_handler(ConnTrack* conntrack, Queue* queue) {
   signal(SIGQUIT, &signal_handler);
 }
 
+// Loads the classification rules from a file, parse them, and imports
+// them in the @p classifier.
+void load_rules(File* rules, Classifier* classifier) {
+  // TODO
+}
+
 int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 

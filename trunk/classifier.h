@@ -20,9 +20,12 @@
 
 #include "base/basictypes.h"
 #include "base/scoped_ptr.h"
+#include "base/util.h"
+#include <vector>
 #include <boost/regex.hpp>
 
 using std::string;
+using std::vector;
 class Connection;
 class Classifier;
 
@@ -117,10 +120,21 @@ class ClassificationRule {
   int32 mark() const { return mark_; }
 
   // Classification constraints mutators.
-  void set_method_regex(const string& method);
-  void set_method_plain(const string& method);
-  void set_url_regex(const string& url);
-  void set_url_maxsize(int max_size);
+  void set_method_regex(const string& method) {
+    initialize_regex(method_, method);
+  }
+  void set_method_plain(const string& method) {
+     initialize_regex(method_, StringPrintf("^%s$", method.c_str()));
+  }
+  void set_url_regex(const string& url) {
+     initialize_regex(url_, url);
+  }
+  void set_url_maxsize(int max_size) {
+    if (max_size < 1) {
+      LOG(FATAL, "ClassificationRule only acceps max_size urls of 1 and more.");
+    }
+    initialize_regex(url_, StringPrintf("^.{%d-}$", max_size + 1));
+  }
 
   // Returns true iff the @p protocol/method/url are matching the rule's
   // constraints.
@@ -150,9 +164,14 @@ class Classifier {
   static const int32 kNoMatchYet = 1;
   static const int32 kNoMatch = 2;
 
-  // TODO: adapt the constructor to filtering rules.
   Classifier();
   ~Classifier();
+
+  // Adds the @p rule to the list of classifications rules. The callee becomes
+  // owner of the pointer.
+  void add_rule(ClassificationRule* rule) {
+    rules_.push_back(rule);
+  }
 
   // Returns a new ConnectionClassifier object, initialized from the @p
   // Connection object. Caller becomes responsible of the object destruction.
@@ -167,6 +186,9 @@ class Classifier {
                            const string& url);
 
  private:
+  // List of rules used for classification.
+  vector<ClassificationRule*> rules_;
+
   DISALLOW_EVIL_CONSTRUCTORS(Classifier);
 };
 

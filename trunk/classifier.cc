@@ -18,7 +18,6 @@
 #include "base/googleinit.h"
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
 #include "classifier.h"
 #include "conntrack.h"
 
@@ -136,7 +135,7 @@ ConnectionProtocol ConnectionClassifier::guess_protocol() const {
   }
 
   // Looks for ftp-specific patterns.
-  // TODO
+  // TODO: add ftp-matching logic
 
   if (enough_material) {
     return OTHER;
@@ -145,7 +144,7 @@ ConnectionProtocol ConnectionClassifier::guess_protocol() const {
 }
 
 void ConnectionClassifier::update_ftp() {
-  // TODO
+  // TODO: add ftp-matching logic
 }
 
 
@@ -243,25 +242,6 @@ ClassificationRule::ClassificationRule(Protocol protocol, int32 mark)
   }
 }
 
-void ClassificationRule::set_method_regex(const string& method) {
-  initialize_regex(method_, method);
-}
-
-void ClassificationRule::set_method_plain(const string& method) {
-  initialize_regex(method_, StringPrintf("^%s$", method.c_str()));
-}
-
-void ClassificationRule::set_url_regex(const string& url) {
-  initialize_regex(url_, url);
-}
-
-void ClassificationRule::set_url_maxsize(int max_size) {
-  if (max_size < 1) {
-    LOG(FATAL, "ClassificationRule only acceps max_size urls of 1 and more.");
-  }
-  initialize_regex(url_, StringPrintf("^.{%d-}$", max_size + 1));
-}
-
 void ClassificationRule::initialize_regex(scoped_ptr<boost::regex>& regex,
                                           const string& text) {
   regex.reset(new boost::regex(
@@ -289,6 +269,11 @@ Classifier::Classifier() {
 }
 
 Classifier::~Classifier() {
+  for (vector<ClassificationRule*>::iterator it = rules_.begin();
+       it != rules_.end(); ++it) {
+    delete *it;
+  }
+  rules_.clear();
 }
 
 int32 Classifier::get_classification(ClassificationRule::Protocol protocol,

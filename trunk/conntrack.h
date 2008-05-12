@@ -23,18 +23,19 @@
 
 #include "base/atomicops.h"
 #include "base/basictypes.h"
+#include "base/hash_map.h"
 #include "base/mutex.h"
 #include "packet.h"
-#include <map>
+#include <ext/hash_map>
 #include <netinet/in.h>
 extern "C" {
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 }
 
-using std::map;
 using std::pair;
 using std::string;
+using std::hash_map;
 
 // TODO: add comments
 // Provided the Acquire/Release methods are used correctly, the object is
@@ -181,7 +182,14 @@ class ConnTrack {
 
   // Returns the connection identified by the @p key. Assumes that the caller
   // owns a lock on connections_lock_.
-  Connection* get_connection_locked(const string& key);
+  inline Connection* get_connection_locked(const string& key) {
+    hash_map<string, Connection*>::iterator it = connections_.find(key);
+    if (it != connections_.end()) {
+      it->second->Acquire();
+      return it->second;
+    }
+    return NULL;
+  }
 
   // Returns the conntrack key associated to the @p conntrack event.
   static string get_conntrack_key(const nf_conntrack* conntrack_event);
@@ -190,7 +198,7 @@ class ConnTrack {
   nfct_handle* conntrack_event_handler_;
 
   // Connection storage, and mutex.
-  map<string, Connection*> connections_;
+  hash_map<string, Connection*> connections_;
   Mutex connections_lock_;
   bool must_stop_;
 

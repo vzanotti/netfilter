@@ -17,6 +17,7 @@
 
 #include "base/basictypes.h"
 #include "base/logging.h"
+#include "classifier.h"
 #include "conntrack.h"
 #include "queue.h"
 #include <pthread.h>
@@ -94,9 +95,10 @@ int main(int argc, char** argv) {
 
   // TODO: configure a classifier, and pass it as a ConnTrack construction-time
   // argument.
+  Classifier classifier;
 
   // Prepares and starts the conntrack thread.
-  ConnTrack conntrack;
+  ConnTrack conntrack(&classifier);
   pthread_t conntrack_thread = start_conntrack_thread(&conntrack);
 
   // Prepares and starts the queue thread.

@@ -37,6 +37,9 @@ using std::pair;
 using std::string;
 using std::hash_map;
 
+class Classifier;
+class ConnectionClassifier;
+
 // TODO: add comments
 // Provided the Acquire/Release methods are used correctly, the object is
 // thread-safe.
@@ -46,8 +49,7 @@ class Connection {
   // classified as "unmatched".
   static const uint32 kMaxBufferSize = 16 * (1 << 10);  // 16k
 
-  // TODO: add comments, and @p classifier.
-  explicit Connection(bool conntracked);
+  explicit Connection(bool conntracked, Classifier* classifier);
   ~Connection();
 
   // "Is conntracked ?" accessors/mutators.
@@ -58,12 +60,12 @@ class Connection {
   uint32 classification_mark() const { return classification_mark_; }
 
   // Exchanged content accessors.
-  int32 packets_egress() const { return packets_egress_; }
-  int32 packets_ingress() const { return packets_ingress_; }
-  int32 bytes_egress() const { return bytes_egress_; }
-  int32 bytes_ingress() const { return bytes_ingress_; }
-  const string& buffer_egress() const { return buffer_egress_; }
-  const string& buffer_ingress() const { return buffer_ingress_; }
+  inline int32 packets_egress() const { return packets_egress_; }
+  inline int32 packets_ingress() const { return packets_ingress_; }
+  inline int32 bytes_egress() const { return bytes_egress_; }
+  inline int32 bytes_ingress() const { return bytes_ingress_; }
+  inline const string& buffer_egress() const { return buffer_egress_; }
+  inline const string& buffer_ingress() const { return buffer_ingress_; }
 
   // Updates the connection with the @p content of the packet.
   // "original" means src->dst, "repl" means dst->src.
@@ -104,6 +106,9 @@ class Connection {
   // Indicates if the connection have already be seen by ConnTrack.
   bool conntracked_;
 
+  // The classification object.
+  ConnectionClassifier* classifier_;
+
   // Stores the current rule match. This number is an opaque number from the
   // classifier, and is supposed to be the NFQUEUE verdict mark.
   int32 classification_mark_;
@@ -139,7 +144,7 @@ class ConnTrack {
 
   // Sets up the conntrack event listener, and register the @p classifier for
   // future connections.
-  ConnTrack(/* TODO: add classifier capabilities */);
+  ConnTrack(Classifier* classifier);
   ~ConnTrack();
 
   // Starts the conntrack event listener; only returns on failure.
@@ -196,6 +201,9 @@ class ConnTrack {
 
   // Conntrack events listener.
   nfct_handle* conntrack_event_handler_;
+
+  // Pointer to the connection classifier.
+  Classifier* classifier_;
 
   // Connection storage, and mutex.
   hash_map<string, Connection*> connections_;

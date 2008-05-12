@@ -73,7 +73,7 @@ string sprintf_ipv6_address(const void* address) {
 //
 // Implementation of the Connection class.
 //
-Connection::Connection(bool conntracked)
+Connection::Connection(bool conntracked, Classifier* classifier)
   : conntracked_(conntracked),
     classification_mark_(Classifier::kNoMatchYet),
     packets_egress_(0), packets_ingress_(0),
@@ -81,14 +81,20 @@ Connection::Connection(bool conntracked)
     buffer_egress_(), buffer_ingress_(),
     ref_counter_(1), content_lock_() {
   Acquire();
-  // TODO: prepare classifier
-  if (1 /* replace 1 by classifier == NULL */) {
+  if (classifier) {
+    classifier_ = classifier->get_connection_classifier(this);
+  } else {
+    classifier_ = NULL;
     classification_mark_ = Classifier::kNoMatch;
+    definitive_mark_ = true;
   }
 }
 
 Connection::~Connection() {
-  // TODO: release classifier
+  if (classifier_) {
+    delete classifier_;
+    classifier_ = NULL;
+  }
 }
 
 void Connection::update_packet_orig(const char* data, int32 data_len) {
@@ -120,16 +126,16 @@ void Connection::update_packet(bool orig, const char* data, int32 data_len) {
 
   // Calls the classifier for status update; it returns the status of the
   // classification. If it is definitive, tears down the classifier.
-  bool classified = false; // TODO: classifier->update();
-  // TODO: classification_mark_ = classifier->classification_mark();
+  bool classified = classifier_->update();
+  classification_mark_ = classifier_->classification_mark();
   if (classified) {
     set_definitive_classification();
     return;
   }
 
   // Asks the classifier for buffer hints, and shrinks the buffer where needed.
-  uint32 hint_egress = 0; // classifier->egress_hint();
-  uint32 hint_ingress = 0; // classifier->ingress_hint();
+  uint32 hint_egress = classifier_->egress_hint();
+  uint32 hint_ingress = classifier_->ingress_hint();
 
   if (hint_egress > (bytes_egress_ - buffer_egress_.size())) {
     CHECK(hint_egress <= bytes_egress_);
@@ -158,22 +164,12 @@ void Connection::update_packet(bool orig, const char* data, int32 data_len) {
   }
 }
 
-Connection* Connection::get_reversed_connection() {
-  Connection* conn = new Connection(conntracked_);
-  conn->classification_mark_ = classification_mark_;
-
-  conn->packets_ingress_ = conn->packets_egress_;
-  conn->packets_egress_ = conn->packets_ingress_;
-  conn->bytes_ingress_ = conn->bytes_egress_;
-  conn->bytes_egress_ = conn->bytes_ingress_;
-  conn->buffer_ingress_ = conn->buffer_egress_;
-  conn->buffer_egress_ = conn->buffer_ingress_;
-
-  return conn;
-}
-
 void Connection::set_definitive_classification() {
-  // TODO: classifier tear-down.
+  if (classifier_) {
+    delete classifier_;
+    classifier_ = NULL;
+  }
+
   buffer_ingress_.clear();
   buffer_egress_.clear();
   definitive_mark_ = true;
@@ -182,8 +178,9 @@ void Connection::set_definitive_classification() {
 //
 // Implementation of the ConnTrack class.
 //
-ConnTrack::ConnTrack()
-    : connections_(),
+ConnTrack::ConnTrack(Classifier* classifier)
+    : classifier_(classifier),
+      connections_(),
       connections_lock_(),
       must_stop_(false) {
   // Sets up the conntrack events listener.
@@ -258,7 +255,8 @@ Connection* ConnTrack::get_connection_or_create(
 
     if (!connection) {
       LOG(INFO, "Got un-conntracked packet '%s'.", keys.first.c_str());
-      connection = connections_[keys.first] = new Connection(false);
+      connections_[keys.first] = new Connection(false, classifier_);
+      connection = connections_[keys.first];
       direction_orig = true;
     }
   }
@@ -347,11 +345,11 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
       if (connection->second != NULL) {
         connection->second->set_conntracked(true);
       } else {
-        connection->second = new Connection(true);
+        connection->second = new Connection(true, classifier_);
         connection->second->Release();
       }
     } else {
-      connections_[key] = new Connection(true);
+      connections_[key] = new Connection(true, classifier_);
       connections_[key]->Release();
     }
   }

@@ -22,6 +22,9 @@ base: objs/atomicops.o objs/logging.o objs/util.o
 objs/atomicops.o: base/atomicops-internals-x86.cc base/atomicops-internals-x86.h base/atomicops.h
 	$(CPP) $(CPPFLAGS) -c -o $@ base/atomicops-internals-x86.cc
 
+objs/io.o: base/io.cc base/io.h
+	$(CPP) $(CPPFLAGS) -c -o $@ base/io.cc
+
 objs/logging.o: base/logging.cc base/logging.h
 	$(CPP) $(CPPFLAGS) -c -o $@ base/logging.cc
 
@@ -41,7 +44,7 @@ objs/packet.o: packet.cc packet.h
 objs/queue.o: queue.cc queue.h
 	$(CPP) $(CPPFLAGS) -c -o $@ queue.cc
 
-urlfilter: urlfilter.cc objs/classifier.o objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/logging.o objs/util.o
+urlfilter: urlfilter.cc objs/classifier.o objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/io.o objs/logging.o objs/util.o
 	$(CPP) $(CPPFLAGS) $(LDFLAGS) -o $@ $+
 
 # Report.

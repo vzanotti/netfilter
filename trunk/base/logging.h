@@ -192,4 +192,10 @@ inline void LOG_IF(int lvl, bool cond, const char* pat, ...) {
   if (cond)  LOG_PRINTF(lvl, pat);
 }
 
+#ifdef NDEBUG
+inline void DLOG(const char* pat, ...) {}
+#else
+inline void DLOG(const char* pat, ...) { LOG_PRINTF(0, pat); }
+#endif
+
 #endif // BASE_LOGGING_H__

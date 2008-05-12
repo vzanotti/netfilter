@@ -1,12 +1,13 @@
 CPP      = g++
-CPPFLAGS = -funsigned-char -Wall -Werror -Wformat -I.
-LDFLAGS  = -lpthread -lgflags -lnfnetlink -lnetfilter_conntrack -lnetfilter_queue
+CPPFLAGS = -funsigned-char -fno-exceptions -Wall -Werror -Wformat -I.
+LDFLAGS  = -lpthread -lgflags -lnfnetlink -lnetfilter_conntrack -lnetfilter_queue -lboost_regex
 OUT      = urlfilter
 
 ifdef DEBUG
   CPPFLAGS += -g
+  LDFLAGS  += -lprofiler -ltcmalloc
 else
-  CPPFLAGS += -O2 -pipe -Wuninitialized
+  CPPFLAGS += -O2 -pipe -Wuninitialized -DNDEBUG
 endif
 
 # Base rules.
@@ -28,6 +29,9 @@ objs/util.o: base/util.cc base/util.h
 	$(CPP) $(CPPFLAGS) -c -o $@ base/util.cc
 
 # Project build rules.
+objs/classifier.o: classifier.cc classifier.h
+	$(CPP) $(CPPFLAGS) -c -o $@ classifier.cc
+
 objs/conntrack.o: conntrack.cc conntrack.h
 	$(CPP) $(CPPFLAGS) -c -o $@ conntrack.cc
 
@@ -37,7 +41,7 @@ objs/packet.o: packet.cc packet.h
 objs/queue.o: queue.cc queue.h
 	$(CPP) $(CPPFLAGS) -c -o $@ queue.cc
 
-urlfilter: urlfilter.cc objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/logging.o objs/util.o
+urlfilter: urlfilter.cc objs/classifier.o objs/conntrack.o objs/packet.o objs/queue.o objs/atomicops.o objs/logging.o objs/util.o
 	$(CPP) $(CPPFLAGS) $(LDFLAGS) -o $@ $+
 
 # Report.

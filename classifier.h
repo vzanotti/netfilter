@@ -19,6 +19,128 @@
 #define CLASSIFIER_H__
 
 #include "base/basictypes.h"
+#include "base/scoped_ptr.h"
+#include <boost/regex.hpp>
+
+using std::string;
+class Connection;
+class Classifier;
+
+enum ConnectionProtocol {
+  UNKNOWN = 0,
+  HTTP,
+  FTP,
+  OTHER
+};
+
+enum ClientServerMode {
+  INGRESS_IS_UNKNOWN,
+  INGRESS_IS_SERVER,
+  INGRESS_IS_CLIENT
+};
+
+// TODO: add comments
+class ConnectionClassifier {
+ public:
+  // Constructs the object from the Classifier (the url classifier), and a
+  // conntrack Connection.
+  ConnectionClassifier(Classifier* classifier, Connection* connection);
+
+  // Classification mark and buffer hints accesors.
+  int32 classification_mark() const { return mark_; }
+  int32 egress_hint() const { return egress_buffer_hint_; }
+  int32 ingress_hint() const { return ingress_buffer_hint_; }
+
+  // Updates the ConnectionClassifier status with new data added to the
+  // Connection's buffers. Returns true iff the classification is definitive.
+  bool update();
+
+ private:
+  // Tries to guess the protocol in the two in/egress buffers.
+  // Returns UNKNOWN if unknown, HTTP/FTP if http/ftp, or OTHER if the
+  // connection was identified as not using in http/ftp protocol.
+  ConnectionProtocol guess_protocol() const;
+
+  // Updates the the classifier status with the latest buffer update.
+  void update_ftp();
+  void update_http();
+
+  // HTTP/FTP protocol matcher internal functions.
+  void http_handle_buffer(bool ingress);
+  bool http_parse_request_line(const string& line,
+                               string* method, string* url) const;
+  bool http_parse_response_line(const string& line) const;
+
+  // Returns the start position in the buffer for the given buffer hint.
+  // Returns the real buffer length.
+  uint32 egress_buffer_start() const;
+  uint32 ingress_buffer_start() const;
+  uint32 egress_buffer_length() const;
+  uint32 ingress_buffer_length() const;
+
+  // Links to the URL classifier, and to the local Connection.
+  Classifier* classifier_;
+  Connection* connection_;
+
+  // Stores the current known protocol (if any).
+  ConnectionProtocol connection_type_;
+
+  // Buffer hints, used to reduce memory footprint in conntrack.h's Connection.
+  // Also used to know up to which point the buffer was processed.
+  uint32 egress_buffer_hint_;
+  uint32 ingress_buffer_hint_;
+
+  // Connection direction hint, and classifier state.
+  ClientServerMode direction_hint_;
+
+  // Last known classification mark, and definitive status.
+  bool classified_;
+  int32 mark_;
+
+  DISALLOW_EVIL_CONSTRUCTORS(ConnectionClassifier);
+};
+
+// TODO: add comments
+class ClassificationRule {
+ public:
+  // Types of URL matched by the filter.
+  enum Protocol {
+    HTTP,
+    FTP
+  };
+
+  // Initializes a new rule for the @p protocol, with the @p mark as
+  // classification mark in case of match.
+  ClassificationRule(Protocol protocol, int32 mark);
+
+  // Classification mark accessor.
+  int32 mark() const { return mark_; }
+
+  // Classification constraints mutators.
+  void set_method_regex(const string& method);
+  void set_method_plain(const string& method);
+  void set_url_regex(const string& url);
+  void set_url_maxsize(int max_size);
+
+  // Returns true iff the @p protocol/method/url are matching the rule's
+  // constraints.
+  bool match(Protocol protocol, const string& method, const string& url);
+
+ private:
+  // Initialises the @p regexp with the @p text, calling LOG(FATAL) in case
+  // of error.
+  void initialize_regex(scoped_ptr<boost::regex>& regex, const string& text);
+
+  // Defines the scope of the rule, and the associated mark.
+  Protocol protocol_;
+  int32 mark_;
+
+  // Contraints.
+  scoped_ptr<boost::regex> method_;
+  scoped_ptr<boost::regex> url_;
+
+  DISALLOW_EVIL_CONSTRUCTORS(ClassificationRule);
+};
 
 // TODO: add comments
 class Classifier {
@@ -28,7 +150,24 @@ class Classifier {
   static const int32 kNoMatchYet = 1;
   static const int32 kNoMatch = 2;
 
-  // TODO: write a classifier !
+  // TODO: adapt the constructor to filtering rules.
+  Classifier();
+  ~Classifier();
+
+  // Returns a new ConnectionClassifier object, initialized from the @p
+  // Connection object. Caller becomes responsible of the object destruction.
+  ConnectionClassifier* get_connection_classifier(Connection* connection) {
+    return new ConnectionClassifier(this, connection);
+  }
+
+  // Returns the classification mark for the @p protocol, @p method, and @p url.
+  // Returns kNoMatch if no match is found.
+  int32 get_classification(ClassificationRule::Protocol protocol,
+                           const string& method,
+                           const string& url);
+
+ private:
+  DISALLOW_EVIL_CONSTRUCTORS(Classifier);
 };
 
 #endif

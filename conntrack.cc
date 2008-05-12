@@ -204,7 +204,7 @@ ConnTrack::~ConnTrack() {
   }
 
   WriterMutexLock ml(&connections_lock_);
-  for (map<string, Connection*>::iterator it = connections_.begin();
+  for (hash_map<string, Connection*>::iterator it = connections_.begin();
        it != connections_.end(); ++it)  {
     if (it->second != NULL) {
       it->second->Destroy();
@@ -264,15 +264,6 @@ Connection* ConnTrack::get_connection_or_create(
   }
 
   return connection;
-}
-
-Connection* ConnTrack::get_connection_locked(const string& key) {
-  map<string, Connection*>::iterator it = connections_.find(key);
-  if (it != connections_.end()) {
-    it->second->Acquire();
-    return it->second;
-  }
-  return NULL;
 }
 
 pair<string, string> ConnTrack::get_packet_keys(const Packet& packet) {
@@ -351,8 +342,14 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
     string key = get_conntrack_key(conntrack_event);
 
     WriterMutexLock ml(&connections_lock_);
-    if (connections_[key] != NULL) {
-      connections_[key]->set_conntracked(true);
+    hash_map<string, Connection*>::iterator connection = connections_.find(key);
+    if (connection != connections_.end()) {
+      if (connection->second != NULL) {
+        connection->second->set_conntracked(true);
+      } else {
+        connection->second = new Connection(true);
+        connection->second->Release();
+      }
     } else {
       connections_[key] = new Connection(true);
       connections_[key]->Release();

@@ -133,12 +133,15 @@ class ClassificationRule {
     if (max_size < 1) {
       LOG(FATAL, "ClassificationRule only acceps max_size urls of 1 and more.");
     }
-    initialize_regex(url_, StringPrintf("^.{%d-}$", max_size + 1));
+    initialize_regex(url_, StringPrintf("^.{%d,}$", max_size + 1));
   }
 
   // Returns true iff the @p protocol/method/url are matching the rule's
   // constraints.
   bool match(Protocol protocol, const string& method, const string& url);
+  
+  // Returns the rule in ASCII format.
+  string str() const;
 
  private:
   // Initialises the @p regexp with the @p text, calling LOG(FATAL) in case
@@ -166,6 +169,9 @@ class Classifier {
 
   Classifier();
   ~Classifier();
+  
+  // Rule accessor.
+  const vector<ClassificationRule*>& rules() const { return rules_; }
 
   // Adds the @p rule to the list of classifications rules. The callee becomes
   // owner of the pointer.

@@ -262,6 +262,22 @@ bool ClassificationRule::match(Protocol protocol,
       (!url_.get() || boost::regex_match(url, *url_));
 }
 
+string ClassificationRule::str() const {
+  string rule = StringPrintf("mark=%d proto=%s",
+                             mark_,
+                             protocol_ == HTTP ? "http" : "ftp");
+  if (url_.get()) {
+    rule.append(" url=");
+    rule.append(url_->str());
+  }
+  if (method_.get()) {
+    rule.append(" method=");
+    rule.append(method_->str());
+  }
+
+  return rule;
+}
+
 //
 // Implementation of the Classifier class.
 //
@@ -279,5 +295,12 @@ Classifier::~Classifier() {
 int32 Classifier::get_classification(ClassificationRule::Protocol protocol,
                                      const string& method,
                                      const string& url) {
+  for (vector<ClassificationRule*>::const_iterator it = rules_.begin();
+       it != rules_.end(); ++it) {
+    if ((*it)->match(protocol, method, url)) {
+      return (*it)->mark();
+    }
+  }
+
   return kNoMatch;
 }

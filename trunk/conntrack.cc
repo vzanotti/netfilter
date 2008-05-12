@@ -211,14 +211,18 @@ ConnTrack::~ConnTrack() {
 }
 
 void ConnTrack::Run() {
-  nfct_callback_register(
+  int result = nfct_callback_register(
       conntrack_event_handler_,
       static_cast<nf_conntrack_msg_type>(NFCT_T_NEW | NFCT_T_DESTROY),
       ConnTrack::conntrack_callback,
       static_cast<void*>(this));
+  if (result < 0) {
+    LOG(FATAL, "Unable to set up the conntrack event callback (%d - %s).",
+        result, strerror(errno));
+  }
 
-  int result = nfct_catch(conntrack_event_handler_);
-  if (result == -1) {
+  result = nfct_catch(conntrack_event_handler_);
+  if (result < 0) {
     LOG(FATAL, "Unable to set up the conntrack event listener (%d - %s).",
         result, strerror(errno));
   }

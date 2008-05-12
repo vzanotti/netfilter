@@ -1,0 +1,6 @@
+# The following rule will mark any url which size is above 255 chars.
+mark=3 proto=http url_maxsize=255
+
+# These rules will match PDF downloads, in both http and ftp repos.
+mark=4 proto=http url=^.*\.pdf$
+mark=4 proto=ftp  url=^.*\.pdf$

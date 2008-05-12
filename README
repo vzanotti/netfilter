@@ -30,7 +30,7 @@ Dependencies:
     dpkg -i libgoogle-gflags-dev_0.8-1_i386.deb libgoogle-gflags0_0.8-1_i386.deb
 
   How to install dependencies on Fedora Core:
-    yum install libnetfilter_conntrack-devel libnetfilter_queue-devel boost-dev
+    yum install libnetfilter_conntrack-devel libnetfilter_queue-devel boost-devel
     wget http://google-gflags.googlecode.com/files/gflags-devel-0.8-1.i386.rpm
     wget http://google-gflags.googlecode.com/files/gflags-0.8-1.i386.rpm
     yum --nogpgcheck localinstall gflags-devel-0.8-1.i386.rpm gflags-0.8-1.i386.rpm
@@ -38,6 +38,20 @@ Dependencies:
   How to install dependencies on Gentoo:
     echo "dev-cpp/gflags ~amd64" >> /etc/portage/package.keywords
     emerge -va net-libs/libnetfilter_queue net-libs/libnetfilter_conntrack dev-cpp/gflags dev-libs/boost
+
+Urlfilter configuration / usage:
+  Basically, it should be used as "urlfilter --rules <path/to/the/rules>".
+  Rules are each written on their own line; lines starting with "#" are comments.
+  The basic rule format is:
+    mark=<mark> proto=<ftp|http> [method=<method> | method_re=<method regex>] [url=<url regex> | url_maxsize=<size>]
+
+  Where:
+    - regex are standard unix regex (ex: ^.*\.pdf^ to match pdf urls);
+    - method is the method used in the protocol (GET/POST/PUT/...);
+    - when url_maxsize is used, urls whose size is above this size will be marked;
+    - mark is the NFQUEUE mark that will be put on packets, for later use by iptables (cf. infra).
+
+  See rules.example for examples of rules.
 
 Netfilter/iptable configuration example:
   A basic iptables configuration could be:

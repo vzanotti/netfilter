@@ -123,7 +123,7 @@ void load_rules(File* rules, Classifier* classifier) {
     }
     
     int32 mark = strtol(rule_map["mark"].c_str(), NULL, 10);
-    ClassificationRule::Protocol proto;
+    ClassificationRule::Protocol proto = ClassificationRule::Protocol(-1);
     if (regex_match(rule_map["proto"], proto_ftp)) {
       proto = ClassificationRule::FTP;
     } else if (regex_match(rule_map["proto"], proto_http)) {

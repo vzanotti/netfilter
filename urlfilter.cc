@@ -17,19 +17,28 @@
 
 #include "base/basictypes.h"
 #include "base/logging.h"
+#include "base/io.h"
 #include "classifier.h"
 #include "conntrack.h"
 #include "queue.h"
+#include <map>
 #include <pthread.h>
 #include <signal.h>
+#include <boost/regex.h>
 #include <google/gflags.h>
+
+using std::map;
 
 DEFINE_int32(queue, 0,
              "No. of the NFQUEUE to listen to for packets to classify.");
 DEFINE_int32(mark_mask, 0xffff,
              "Mask to use when adding the classification information to the "
              "NFQUEUE mark.");
-// TODO: add parameters for the classification configuration.
+DEFINE_string(rules, "",
+              "File containing the urlfilter rules. They are supposed to be in "
+              "the 'mark=<mark> proto=<proto> url=<url regex> method=<method>' "
+              "format (alternatively, method_re and url_maxsize can be used). "
+              "Regexps are standard unix regexpes.");
 
 // Starts the conntrack management thread. Returns the thread id.
 void* conntrack_thread_starter(void* data) {
@@ -93,15 +102,73 @@ void setup_signal_handler(ConnTrack* conntrack, Queue* queue) {
 // Loads the classification rules from a file, parse them, and imports
 // them in the @p classifier.
 void load_rules(File* rules, Classifier* classifier) {
-  // TODO
+  int nrules = 0, nline = 1;
+  boost::regex proto_ftp("^ftp$", boost::regex_constants::icase);
+  boost::regex proto_http("^http$", boost::regex_constants::icase);
+  
+  string line;
+  for (; rules->ReadLine(&line); nline++) {
+    if (line.size() < 2 || line[0] == '#') {
+      continue;
+    }
+
+    vector<pair<string, string> > rule_kv;
+    SplitStringIntoKeyValuePairs(line, "=", " \t", &rule_kv);
+    map<string, string> rule_map(rule_kv.begin(), rule_kv.end());
+    
+    if (rule_map.find("mark") == rule_map.end() ||
+        rule_map.find("proto") == rule_map.end()) {
+      LOG(INFO, "At line %d:", nline);
+      LOG(FATAL, "An urlfilter rule must include at least a mark and a proto.");
+    }
+    
+    int32 mark = strtol(rule_map["mark"].c_str(), NULL, 10);
+    ClassificationRule::Protocol proto;
+    if (regex_match(rule_map["proto"], proto_ftp)) {
+      proto = ClassificationRule::FTP;
+    } else if (regex_match(rule_map["proto"], proto_http)) {
+      proto = ClassificationRule::HTTP;
+    } else {
+      LOG(INFO, "At line %d:", nline);
+      LOG(FATAL, "Unrecognized protocol '%s'", rule_map["proto"].c_str());
+    }
+    ClassificationRule* rule = new ClassificationRule(proto, mark);
+    
+    if (rule_map.find("method") != rule_map.end()) {
+      rule->set_method_plain(rule_map["method"]);
+    }
+    if (rule_map.find("method_re") != rule_map.end()) {
+      rule->set_method_regex(rule_map["method_re"]);
+    }
+    if (rule_map.find("url") != rule_map.end()) {
+      rule->set_url_regex(rule_map["url"]);
+    }
+    if (rule_map.find("url_maxsize") != rule_map.end()) {
+      int max_size = strtol(rule_map["url_maxsize"].c_str(), NULL, 10);
+      rule->set_url_maxsize(max_size);
+    }
+                                                
+    nrules++;
+    classifier->add_rule(rule);
+  }
+  
+  LOG(INFO, "Loaded %d rules into the classifier:", nrules);
+  for (uint r = 0; r < classifier->rules().size(); ++r) {
+    LOG(INFO, "  (%d) %s", r, classifier->rules()[r]->str().c_str());
+  }
 }
 
 int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  // TODO: configure a classifier, and pass it as a ConnTrack construction-time
-  // argument.
+  // Loads the rules into a new classifier.
   Classifier classifier;
+  if (FLAGS_rules.empty()) {
+    LOG(FATAL, "You must specificy a rule file with --rules.");
+  }
+  
+  scoped_ptr<File> rules(File::OpenOrDie(FLAGS_rules.c_str(), "r"));
+  load_rules(rules.get(), &classifier);
 
   // Prepares and starts the conntrack thread.
   ConnTrack conntrack(&classifier);

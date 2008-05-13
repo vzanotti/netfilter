@@ -100,23 +100,6 @@ void Release_Store(volatile AtomicWord* ptr, AtomicWord value);
 AtomicWord Acquire_Load(volatile const AtomicWord* ptr);
 AtomicWord Release_Load(volatile const AtomicWord* ptr);
 
-// Corresponding operations on Atomic32
-Atomic32 CompareAndSwap(volatile Atomic32* ptr,
-                        Atomic32 old_value,
-                        Atomic32 new_value);
-Atomic32 AtomicExchange(volatile Atomic32* ptr, Atomic32 new_value);
-Atomic32 AtomicIncrement(volatile Atomic32* ptr, Atomic32 increment);
-Atomic32 Acquire_CompareAndSwap(volatile Atomic32* ptr,
-                                Atomic32 old_value,
-                                Atomic32 new_value);
-Atomic32 Release_CompareAndSwap(volatile Atomic32* ptr,
-                                Atomic32 old_value,
-                                Atomic32 new_value);
-void Acquire_Store(volatile Atomic32* ptr, Atomic32 value);
-void Release_Store(volatile Atomic32* ptr, Atomic32 value);
-Atomic32 Acquire_Load(volatile const Atomic32* ptr);
-Atomic32 Release_Load(volatile const Atomic32* ptr);
-
 void MemoryBarrier();
 
 #endif

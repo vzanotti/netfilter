@@ -39,7 +39,6 @@
 #define BASE_ATOMICOPS_INTERNALS_X86_H__
 
 typedef intptr_t AtomicWord;
-typedef int32_t Atomic32;
 
 // There are a couple places we need to specialize opcodes to account for the
 // different AtomicWord sizes on x86_64 and 32-bit platforms.

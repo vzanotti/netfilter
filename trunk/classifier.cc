@@ -37,9 +37,9 @@ static const boost::regex http_response_line(
 // Puts the line starting at @p start_pos in the @p buffer, and returns
 // the next line position, or returns string::npos if no line is found.
 // A line can end with any of \r and \n.
-uint get_line(const string& buffer, uint start_pos, string* line) {
+size_t get_line(const string& buffer, size_t start_pos, string* line) {
   CHECK(line != NULL);
-  uint eol_index = buffer.find_first_of("\r\n", start_pos);
+  size_t eol_index = buffer.find_first_of("\r\n", start_pos);
 
   if (eol_index != string::npos) {
     line->assign(buffer.substr(start_pos, eol_index - start_pos));

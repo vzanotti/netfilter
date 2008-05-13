@@ -125,7 +125,7 @@ class Connection {
   string buffer_ingress_;
 
   // Thread-safety.
-  Atomic32 ref_counter_;
+  AtomicWord ref_counter_;
   Mutex content_lock_;
 
   DISALLOW_EVIL_CONSTRUCTORS(Connection);

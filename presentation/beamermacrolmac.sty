@@ -1,0 +1,35 @@
+\ProvidesPackage{beamermacrolmac}
+
+% Macros pour les Notations mathématiques
+\newcommand{\absp}{\{\Delta\}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\ud}{\mathrm{d}}
+\newcommand{\1}{\mathds{1}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\Borel}{\mathfrak{B}}
+\newcommand{\frakE}{\mathfrak{E}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\T}{\mathfrak{T}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\fcor}[1]{\mathrm{R}_{#1}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\Rel}{\mathbf{R}}
+% Macro pour argmax : comportement comme limite \lim
+\def\argmax{\operatornamewithlimits{arg\,max}}
+% Macro pour argmax : comportement comme limite \lim
+\def\inf{\operatornamewithlimits{inf}}
+
+\newcommand{\graphe}[4]{%
+  \begin{figure}[htbp!]
+    \begin{center}
+      \includegraphics[width=#3]{#1}
+      \caption{\label{#2} #4}
+    \end{center}
+  \end{figure}
+}

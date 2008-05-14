@@ -52,3 +52,9 @@ report: report/rapport.pdf
 
 report/rapport.pdf: report/but.tex report/concl.tex report/implementation.tex report/intro.tex report/rapport.tex report/biblio.bib
 	pdflatex -interaction=batchmode -output-directory=report rapport.tex > /dev/null
+
+# Presentation.
+presentation: presentation/presentation.pdf
+
+presentation/presentation.pdf: presentation/but.tex presentation/implementation.tex presentation/presentation.tex
+	pdflatex -interaction=batchmode -output-directory=presentation presentation.tex > /dev/null

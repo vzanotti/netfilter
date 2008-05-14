@@ -1,0 +1,235 @@
+\ProvidesPackageRCS $Header: /cvsroot/latex-beamer/latex-beamer/themes/theme/compatibility/beamerthemelmac.sty,v 1.9 2004/10/07 20:53:10 tantau Exp $
+
+% Copyright 2003 by Till Tantau <tantau@users.sourceforge.net>.
+%
+% This program can be redistributed and/or modified under the terms
+% of the GNU Public License, version 2.
+%
+% Current beamertheme LMAC by Julien Chiquet, May 2005
+
+% __________________________________________________________________
+%
+% INCLUSION DES PACKAGES NECESSAIRES
+\RequirePackage{pgf,pgfarrows,pgfnodes,pgfautomata,pgfheaps,pgfshade}
+\RequirePackage{colortbl}
+\RequirePackage{amsmath,amssymb,amsfonts}
+\RequirePackage[english]{babel}
+\RequirePackage[latin1]{inputenc}
+
+\usecolortheme{lmac}
+% __________________________________________________________________
+
+% __________________________________________________________________
+%
+% DEFINITIONS DIVERS
+
+%definitions of the words in french and in english
+
+\newcommand{\OF}{\ of\ }
+
+\iflanguage{french}{%
+\renewcommand{\OF}{\ de\ }
+}{}
+
+\newcommand{\OUTLINE}{Outline}
+
+\iflanguage{french}{%
+\renewcommand{\OUTLINE}{Plan}
+}{}
+
+% BARRE DE NAVIGUATION LATERALE
+\newdimen\beamer@sidebarwidth
+\usebeamerfont{frametitle}
+\beamer@sidebarwidth=3.5\baselineskip
+\reset@font
+\def\beamer@lefttext{left}
+\DeclareOptionBeamer{width}{\beamer@sidebarwidth=#1}
+\beamer@nav@subsectionstyle{show}
+
+% LES LOGOS : UTC + LMAC
+\newlength\logoHeightLmac
+\newlength\logoHeightUtc
+\logoHeightLmac = 6ex
+\logoHeightUtc  = 5ex
+\pgfdeclareimage[height=\logoHeightLmac,interpolate=true]{LMAC}{presentation/pictures/telecomparis}
+\pgfdeclareimage[height=\logoHeightUtc,interpolate=true]{UTC}{presentation/pictures/binaire}
+
+% PERSONNALISATION DE LA BARRE DE NAVIGUATION (plus 'legere')
+\setbeamertemplate{navigation symbols}{
+    \insertframenavigationsymbol
+    \insertbackfindforwardnavigationsymbol
+}
+
+\setbeamercovered{dynamic}
+\setbeamersize{text margin left=0.15cm,text margin right=0.25cm}
+\setbeamerfont{date}{size=\scriptsize}
+\beamertemplatetransparentcovereddynamic
+
+\mode<presentation>
+% __________________________________________________________________
+%
+% ENTETE ET PIED DE PAGES
+
+% ENTETE
+\defbeamertemplate*{headline}{LMAC theme}
+{%
+  \leavevmode%
+  \advance\logoHeightLmac by 0.125ex%
+  \vbox{
+    \vskip0.5ex%
+    \hbox{        
+      \begin{beamercolorbox}[wd=.15\paperwidth,ht=\logoHeightLmac]{bleuc}
+        \vbox to\logoHeightLmac{\vfil\pgfuseimage{LMAC}\vfill}
+      \end{beamercolorbox}
+      % Ligne verticale
+      \vbox to10pt{
+        \hbox{ 
+          \hskip-0.05cm
+          \vrule width.4pt height\paperheight \hfil}
+        \vfil
+        \vss
+      }
+      \begin{beamercolorbox}[wd=.325\paperwidth,ht=\logoHeightLmac,leftskip=.3cm,rightskip=.3cm plus1fil]{bleuc}%
+        \vbox to\logoHeightLmac{\vfil\usebeamerfont{title in head/normal}\hbox{\hfil\insertshorttitle\hfil}\vfil}
+      \end{beamercolorbox}
+      \begin{beamercolorbox}[wd=.35\paperwidth,ht=\logoHeightLmac,leftskip=.3cm plus1fill,rightskip=.3cm]{bleuc}%
+        \vbox to\logoHeightLmac{\vfil\usebeamerfont{author in head/foot}\hbox{\hfil \insertshortdate\hfil}\vfil}
+      \end{beamercolorbox}%
+      \begin{beamercolorbox}[wd=.15\paperwidth,ht=\logoHeightLmac,leftskip=.3cm,rightskip=.3cm plus1fil]{fond}%
+        \vbox to\logoHeightLmac{\vfil\usebeamerfont{title in head/foot}\hbox{\hfil \insertframenumber\OF\inserttotalframenumber\hfil}\vfil}
+      \end{beamercolorbox}%
+    }
+    \vfill
+    \vskip-0.5ex%
+    % Barre horizontale
+    \hbox{\hskip.125\paperwidth
+      \begin{beamercolorbox}[wd=0.875\paperwidth,ht=0.25ex,dp=0.25ex,leftskip=.3cm,rightskip=.3cm plus1fil]{barhead}%
+        \hfil \vfil \vfil \hfil
+      \end{beamercolorbox}%
+    }
+    \vskip0.5ex%
+  }
+}
+
+% PIED DE PAGE
+% logo utc + naviguation interslides
+\defbeamertemplate*{footline}{LMAC theme}
+{%
+  \vbox{
+  \leavevmode%
+  \hbox{
+    \begin{beamercolorbox}[wd=.15\paperwidth]{white}
+      \vbox to\logoHeightUtc{\vfil\pgfuseimage{UTC}\vfil}
+    \end{beamercolorbox}
+  }
+  \begin{beamercolorbox}[wd=.825\paperwidth]{white}
+    \hfill \hbox{\usebeamertemplate***{navigation symbols}}
+  \end{beamercolorbox}
+  \vskip0.5ex%
+  }
+}
+% __________________________________________________________________
+
+% __________________________________________________________________
+%
+% PARTIE GAUCHE : SIDE BARRE
+\def\beamer@sidebarformat#1#2#3{%
+  \begin{beamercolorbox}[wd=\beamer@sidebarwidth,leftskip=#1,rightskip=2ex plus1fil,vmode]{#2}
+    \vbox{}%
+    #3\par%
+    \vbox{}%
+    \vskip-1.5ex%
+  \end{beamercolorbox}
+}
+
+% d�finition du style des sections, sous-section dans la barre 
+% de naviguation de gauche
+\defbeamertemplate*{section in sidebar}{LMAC theme}{%
+  \vbox{\vskip3ex\beamer@sidebarformat{2pt}{section in sidebar}{\insertsectionhead}}}
+\defbeamertemplate*{section in sidebar shaded}{LMAC theme}{%
+  \vbox{\vskip3ex\beamer@sidebarformat{2pt}{section in sidebar shaded}{\insertsectionhead}}}
+\defbeamertemplate*{subsection in sidebar}{LMAC theme}{%
+  \beamer@sidebarformat{4pt}{subsection in sidebar}{\insertsubsectionhead}}
+\defbeamertemplate*{subsection in sidebar shaded}{LMAC theme}{%
+  \beamer@sidebarformat{4pt}{subsection in sidebar shaded}{\insertsubsectionhead}}
+
+% format de la barre lat�rale
+\setbeamersize{sidebar width left=\beamer@sidebarwidth}
+\defbeamertemplate*{sidebar left}{LMAC theme}{%
+  \beamer@tempdim=\beamer@sidebarwidth%
+  \advance\beamer@tempdim by -6pt%
+  % titre de la barre de naviguation : 'PLAN'
+  {
+    \vskip1.5em
+    \hskip2pt%
+    \usebeamercolor[fg]{title in sidebar}%
+    \begin{beamercolorbox}[wd=\beamer@sidebarwidth]{fond}%
+      \vbox{\vfil\hbox{\hfil\usebeamerfont{title in sidebar}\OUTLINE\hfil}}
+    \end{beamercolorbox}%
+    \vskip1.5em%
+  }%
+  % �l�ments de naviguation entre les sections...
+  \insertverticalnavigation{\beamer@sidebarwidth}%
+}%
+% __________________________________________________________________
+
+% __________________________________________________________________
+%
+% SIDEBAR A DROITE : RIEN... 
+%
+\defbeamertemplate*{sidebar right}{LMAC theme}{}
+% __________________________________________________________________
+
+% __________________________________________________________________
+%
+% INNER THEMES : PUCES A RECTANGLES
+%
+\useinnertheme{rectangles}
+% __________________________________________________________________
+
+
+% __________________________________________________________________
+%
+% THEOREMES EN FRANCAIS
+\mode
+<all>
+{
+  \ifbeamer@blocks
+    \newtheorem{theoreme}[theorem]{Th\'{e}or\`{e}me}
+    \newtheorem{proposition}[theorem]{Proposition}
+    \newtheorem{propriete}[theorem]{Propri\'{e}t\'{e}}
+    \newtheorem{corollaire}[theorem]{Corollaire}
+    \newtheorem{lemme}[theorem]{Lemme}
+    \newtheorem{probleme}[theorem]{Probl\`{e}me}
+    \newtheorem{fait}[theorem]{Fait}
+    \newtheorem{remarque}{Remarque}
+    \newtheorem{principe}{Principe}
+    \newtheorem{hypothese}{Hypoth\`{e}se}
+
+    \theoremstyle{definition}
+    \newtheorem{definitionf}[theorem]{D\'{e}finition}
+    \newtheorem{definitionsf}[theorem]{D\'{e}finitions}
+    
+    \theoremstyle{example}
+    \newtheorem{exemple}[theorem]{Exemple}
+    \newtheorem{exemples}[theorem]{Exemples}
+
+    \theoremstyle{plain}
+
+    % Alias -> A UTILISERPOUR LES ENVIRONNEMENTS DE TYPE THEOREM
+    \newenvironment{Lemme}{\begin{lemme}}{\end{lemme}}
+    \newenvironment{Demonstration}{\begin{proof}[D\'{e}monstration]}{\end{proof}}
+    \newenvironment{Theoreme}{\begin{theoreme}}{\end{theoreme}}
+    \newenvironment{Probleme}{\begin{probleme}}{\end{probleme}}
+    \newenvironment{Corollaire}{\begin{corollaire}}{\end{corollaire}}
+    \newenvironment{Proposition}{\begin{proposition}}{\end{proposition}}
+    \newenvironment{Propriete}{\begin{propriete}}{\end{propriete}}
+    \newenvironment{Exemple}{\begin{example}}{\end{example}}
+    \newenvironment{Exemples}{\begin{examples}}{\end{examples}}
+    \newenvironment{Remarque}{\begin{remarque}}{\end{remarque}}
+    \newenvironment{Principe}{\begin{principe}}{\end{principe}}
+    \newenvironment{Hypothese}{\begin{hypothese}}{\end{hypothese}}
+    \newenvironment{Definitionf}{\begin{definitionf}}{\end{definitionf}}
+    \newenvironment{Definitionsf}{\begin{definitionsf}}{\end{definitionsf}}
+  \fi
+}

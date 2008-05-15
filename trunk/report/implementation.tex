@@ -1,4 +1,4 @@
-\subsection*{Organisation du programme}
+\subsection{Organisation du programme}
 Le projet contient :
 \begin{itemize}
 \item un \verb+README+, avec le mode d'emploi pour installer les dépendances ;
@@ -16,7 +16,7 @@ Nous avons utilisé la \verb+libnetfilter_conntrack+ pour
 récupérer les entrées conntrack existantes du noyau, et afin de maintenir une table locale (cela évite de se poser la question de
 la suppression des vieilles entrées).
 
-\subsection*{Fonctionnement du logiciel}
+\subsection{Fonctionnement du logiciel}
 Il y a deux threads ; le premier (cf. \verb+ConnTrack::Run()+) écoute sur un
 nfnetlink, reçoit les mises à jour de la table conntrack du noyau, et
 maintient une copie locale.\\
@@ -42,17 +42,7 @@ filtrage iptables et envoi vers la target \verb+NFQUEUE+\\
 \verb+->+ éventuel refiltrage (en utilisant \verb+-m mark+ pour filtrer sur la mark).
 
 
-%*****Je vais essayer de faire deux jolis schémas: un avec le fonctionnement
-%de l'appli (les deux threads, la base "conntrack" des connections, le
-%chemin des paquets vers le classifier), et un deuxième avec le schéma
-%des flux au niveau de netfilter (les paquets sont interceptés par un
-%règle iptables qui les "-j NFQUEUE"; là ils sont récupérés en
-%userspace, markés, et relâchés dans le noyau; à ce moment la une règle
-%iptables sur POSTROUTING peut leur faire un sort (ou, au choix, on
-%peut leur appliquer de la QoS -- Cf doc de l7-filter-userspace).*****
-%s'inspirer de http://l7-filter.sourceforge.net/PacketFlow.png
-
-\subsection*{Quelques remarques et comparaisons avec l7-filter}
+\subsection{Quelques remarques et comparaisons avec l7-filter}
 Le l7-filter userspace utilisait un conntrack fait main alors que nous utilisons le conntrack du noyau. Cela devrait être plus efficace parce que cela permettra dans quasiment tous les cas de savoir qui est le client qui est le serveur à l'exception du cas où un paquet arrive sur /queue/ avant que l'information de conntrack n'arrive dans l'autre thread.\\
 
 Une fois qu'un paquet a été envoyé à NFQUEUE, il ne peut pas passer
@@ -64,4 +54,8 @@ buffer d'une connection dépasse une certaine taille, la connection
 passe en NoMatch (si le BufferHint est bien respecté par le
 classifier, cela n'arrivera pas dans les cas qui nous intéressent).\\
 
-Notre programme supporte l'IPv6 alors que l7-filter ne le supportait pas.\\
+Notre programme supporte l'IPv6 alors que l7-filter ne le supportait pas.\\\
+
+
+Ajouter un schéma de l'appli : scema2.png
+

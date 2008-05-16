@@ -72,9 +72,9 @@ class Connection {
   void update_packet_orig(const char* data, int32 data_len);
   void update_packet_repl(const char* data, int32 data_len);
 
-  // Returns a reversed version of the current Connection (used to fix a late
-  // conntrack table). The caller as a reference count on the object.
-  Connection* get_reversed_connection();
+  // Reverses the ConnectionClassifier object, for when conntrack started using
+  // the wrong ORIG & REPL directions.
+  void reverse_connection();
 
   // Thread-safety: each instance must Acquire() the object before using it
   // (which prevents other from using it). Release() must be called when not
@@ -197,7 +197,10 @@ class ConnTrack {
   }
 
   // Returns the conntrack key associated to the @p conntrack event.
-  static string get_conntrack_key(const nf_conntrack* conntrack_event);
+  // If @p orig_dir is true, returns the original direction key, otherwise
+  // returns the reverse direction key.
+  static string get_conntrack_key(const nf_conntrack* conntrack_event,
+                                  bool orig_dir);
 
   // Conntrack events listener.
   nfct_handle* conntrack_event_handler_;

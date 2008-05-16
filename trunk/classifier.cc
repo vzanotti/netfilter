@@ -69,6 +69,16 @@ ConnectionClassifier::ConnectionClassifier(
     mark_(Classifier::kNoMatchYet) {
 }
 
+void ConnectionClassifier::reverse_connection() {
+  std::swap(egress_buffer_hint_, ingress_buffer_hint_);
+
+  if (direction_hint_ == INGRESS_IS_SERVER) {
+    direction_hint_ = INGRESS_IS_CLIENT;
+  } else if (direction_hint_ == INGRESS_IS_CLIENT) {
+    direction_hint_ = INGRESS_IS_SERVER;
+  }
+}
+
 bool ConnectionClassifier::update() {
   // If connection has already been classified, returns immediately.
   if (classified_) {

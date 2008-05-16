@@ -58,6 +58,10 @@ class ConnectionClassifier {
   // Connection's buffers. Returns true iff the classification is definitive.
   bool update();
 
+  // Reverses the ConnectionClassifier object, for when conntrack started using
+  // the wrong ORIG & REPL directions.
+  void reverse_connection();
+
  private:
   // Tries to guess the protocol in the two in/egress buffers.
   // Returns UNKNOWN if unknown, HTTP/FTP if http/ftp, or OTHER if the
@@ -139,7 +143,7 @@ class ClassificationRule {
   // Returns true iff the @p protocol/method/url are matching the rule's
   // constraints.
   bool match(Protocol protocol, const string& method, const string& url);
-  
+
   // Returns the rule in ASCII format.
   string str() const;
 
@@ -169,7 +173,7 @@ class Classifier {
 
   Classifier();
   ~Classifier();
-  
+
   // Rule accessor.
   const vector<ClassificationRule*>& rules() const { return rules_; }
 

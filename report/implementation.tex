@@ -17,6 +17,27 @@ récupérer les entrées conntrack existantes du noyau, et afin de maintenir une
 la suppression des vieilles entrées).
 
 \subsection{Fonctionnement du logiciel}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{schema2.png}\\
+\title{Fonctionnement du module}
+\end{figure}
+
+\begin{footnotesize}
+\noindent Légende du schéma :
+
+\begin{enumerate}
+\item Maintien d'une copie locale de la base conntrack du noyau, grâces aux \og events \fg{} de la \verb+libnetfilter_conntrack+.
+\item Récupération des paquets envoyés sur \verb+NFQUEUE+ via la \verb+libnetfilter_queue+.
+\item Récupération des paquets envoyés sur \verb+NFQUEUE+ via la \verb+libnetfilter_queue+.
+\item Retour des informations de conntrack pour le paquet, en particulier le contenu des paquets précédents, pour permettra la classification.
+\item Classification basée exclusivement sur le contenu de la connexion.
+\item Réinjection du paquet, et d'une \og mark \fg{} de classification, dans la chaîne de filtrage netfilter du noyau.
+\end{enumerate}
+\end{footnotesize}
+
+
 Il y a deux threads ; le premier (cf. \verb+ConnTrack::Run()+) écoute sur un
 nfnetlink, reçoit les mises à jour de la table conntrack du noyau, et
 maintient une copie locale.\\
@@ -54,8 +75,4 @@ buffer d'une connection dépasse une certaine taille, la connection
 passe en NoMatch (si le BufferHint est bien respecté par le
 classifier, cela n'arrivera pas dans les cas qui nous intéressent).\\
 
-Notre programme supporte l'IPv6 alors que l7-filter ne le supportait pas.\\\
-
-
-Ajouter un schéma de l'appli : scema2.png
-
+Notre programme supporte l'IPv6 alors que l7-filter ne le supportait pas.

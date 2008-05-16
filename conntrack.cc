@@ -175,6 +175,16 @@ void Connection::set_definitive_classification() {
   definitive_mark_ = true;
 }
 
+void Connection::reverse_connection() {
+  if (classifier_) {
+    classifier_->reverse_connection();
+  }
+
+  std::swap(packets_egress_, packets_ingress_);
+  std::swap(bytes_egress_, bytes_ingress_);
+  std::swap(buffer_egress_, buffer_ingress_);
+}
+
 //
 // Implementation of the ConnTrack class.
 //
@@ -340,8 +350,7 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
 
   // Creates a new connection on new conntrack item.
   if (type == NFCT_T_NEW) {
-    // TODO: checks that no connection currently exists on the reverse key.
-    string key = get_conntrack_key(conntrack_event);
+    string key = get_conntrack_key(conntrack_event, true);
 
     WriterMutexLock ml(&connections_lock_);
     hash_map<string, Connection*>::iterator connection = connections_.find(key);
@@ -353,14 +362,30 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
         connection->second->Release();
       }
     } else {
-      connections_[key] = new Connection(true, classifier_);
-      connections_[key]->Release();
+      string reverse_key = get_conntrack_key(conntrack_event, false);
+      hash_map<string, Connection*>::iterator reverse_connection =
+          connections_.find(key);
+
+      // Looks for an existing "reverse" connection -- happens when a packet is
+      // first seen on the Queue before the conntracker becomes aware of the
+      // underlying connection.
+      if (reverse_connection != connections_.end()) {
+        LOG(INFO, "Reverse connection found for orig key '%s'.", key.c_str());
+        reverse_connection->second->Acquire();
+        reverse_connection->second->reverse_connection();
+        reverse_connection->second->Release();
+        connections_[key] = reverse_connection->second;
+        connections_.erase(reverse_key);
+      } else {
+        connections_[key] = new Connection(true, classifier_);
+        connections_[key]->Release();
+      }
     }
   }
 
   // Deletes older connections.
   if (type == NFCT_T_DESTROY) {
-    string key = get_conntrack_key(conntrack_event);
+    string key = get_conntrack_key(conntrack_event, true);
 
     WriterMutexLock ml(&connections_lock_);
     if (connections_[key] != NULL) {
@@ -372,7 +397,8 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
   return NFCT_CB_CONTINUE;
 }
 
-string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event) {
+string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event,
+                                    bool orig_dir) {
   uint8 l3_proto = nfct_get_attr_u8(conntrack_event, ATTR_L3PROTO);
   string l3_conntrack;
 
@@ -381,15 +407,15 @@ string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event) {
     uint32 dst_address = nfct_get_attr_u32(conntrack_event, ATTR_IPV4_DST);
     l3_conntrack = StringPrintf(
         "src=%s dst=%s",
-        sprintf_ipv4_address(src_address).c_str(),
-        sprintf_ipv4_address(dst_address).c_str());
+        sprintf_ipv4_address(orig_dir ? src_address : dst_address).c_str(),
+        sprintf_ipv4_address(orig_dir ? dst_address : src_address).c_str());
   } else if (l3_proto == AF_INET6) {
     const void* src_address = nfct_get_attr(conntrack_event, ATTR_IPV6_SRC);
     const void* dst_address = nfct_get_attr(conntrack_event, ATTR_IPV6_DST);
     l3_conntrack = StringPrintf(
         "src=%s dst=%s",
-        sprintf_ipv6_address(src_address).c_str(),
-        sprintf_ipv6_address(dst_address).c_str());
+        sprintf_ipv6_address(orig_dir ? src_address : dst_address).c_str(),
+        sprintf_ipv6_address(orig_dir ? dst_address : src_address).c_str());
   } else {
     l3_conntrack = StringPrintf("l3-unk-%d", l3_proto);
   }
@@ -400,7 +426,8 @@ string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event) {
   return StringPrintf("%s %s sport=%d dport=%d",
                       sprintf_protocol(l4_proto).c_str(),
                       l3_conntrack.c_str(),
-                      src_port, dst_port);
+                      orig_dir ? src_port : dst_port,
+                      orig_dir ? dst_port : src_port);
 }
 
 

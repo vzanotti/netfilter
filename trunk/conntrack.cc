@@ -42,10 +42,13 @@ void kProtoNames_initializer() {
 }
 REGISTER_MODULE_INITIALIZER(kProtoNames, kProtoNames_initializer());
 
-// Returns a string made from the @p protocol number.
-string sprintf_protocol(uint8 proto) {
+// Returns a string made from the @p protocol number. This function is NOT
+// re-entrant.
+static char protocol_buffer__[64];
+const char* sprintf_protocol(uint8 proto) {
   if (kProtoNames[proto] == NULL) {
-    return StringPrintf("l4-unk-%d", proto);
+    snprintf(protocol_buffer__, sizeof(protocol_buffer__), "l4-unk-%d", proto);
+    return protocol_buffer__;
   }
   return kProtoNames[proto];
 }
@@ -278,42 +281,47 @@ Connection* ConnTrack::get_connection_or_create(
   return connection;
 }
 
-pair<string, string> ConnTrack::get_packet_keys(const Packet& packet) {
+void ConnTrack::get_packet_keys(const Packet& packet,
+                                pair<string, string>* keys) {
   string l3_conntrack_orig, l3_conntrack_repl;
 
   if (packet.l3_protocol() == 4) {
-    l3_conntrack_orig = StringPrintf(
+    SStringPrintf(
+        &l3_conntrack_orig,
         "src=%s dst=%s",
         sprintf_ipv4_address(packet.l3_ipv4_src()).c_str(),
         sprintf_ipv4_address(packet.l3_ipv4_dst()).c_str());
-    l3_conntrack_repl = StringPrintf(
+    SStringPrintf(
+        &l3_conntrack_repl,
         "src=%s dst=%s",
         sprintf_ipv4_address(packet.l3_ipv4_dst()).c_str(),
         sprintf_ipv4_address(packet.l3_ipv4_src()).c_str());
   } else if (packet.l3_protocol() == 6) {
-    l3_conntrack_orig = StringPrintf(
+    SStringPrintf(
+        &l3_conntrack_orig,
         "src=%s dst=%s",
         sprintf_ipv6_address(packet.l3_ipv6_src()).c_str(),
         sprintf_ipv6_address(packet.l3_ipv6_dst()).c_str());
-    l3_conntrack_orig = StringPrintf(
+    SStringPrintf(
+        &l3_conntrack_repl,
         "src=%s dst=%s",
         sprintf_ipv6_address(packet.l3_ipv6_dst()).c_str(),
         sprintf_ipv6_address(packet.l3_ipv6_src()).c_str());
   } else {
-    l3_conntrack_orig = StringPrintf("l3-unk-%d", packet.l3_protocol());
-    l3_conntrack_repl = StringPrintf("l3-unk-%d", packet.l3_protocol());
+     SStringPrintf(&l3_conntrack_orig, "l3-unk-%d", packet.l3_protocol());
+     SStringPrintf(&l3_conntrack_repl, "l3-unk-%d", packet.l3_protocol());
   }
 
-  pair<string, string> keys;
-  keys.first = StringPrintf("%s %s sport=%d dport=%d",
-                            sprintf_protocol(packet.l4_protocol()).c_str(),
-                            l3_conntrack_orig.c_str(),
-                            packet.l4_src(), packet.l4_dst());
-  keys.second = StringPrintf("%s %s sport=%d dport=%d",
-                             sprintf_protocol(packet.l4_protocol()).c_str(),
-                             l3_conntrack_repl.c_str(),
-                             packet.l4_dst(), packet.l4_src());
-  return keys;
+  SStringPrintf(&keys->first,
+                "%s %s sport=%d dport=%d",
+                sprintf_protocol(packet.l4_protocol()),
+                l3_conntrack_orig.c_str(),
+                packet.l4_src(), packet.l4_dst());
+  SStringPrintf(&keys->second,
+                "%s %s sport=%d dport=%d",
+                sprintf_protocol(packet.l4_protocol()),
+                l3_conntrack_repl.c_str(),
+                packet.l4_dst(), packet.l4_src());
 }
 
 int ConnTrack::conntrack_callback(nf_conntrack_msg_type type,
@@ -400,36 +408,33 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
 string ConnTrack::get_conntrack_key(const nf_conntrack* conntrack_event,
                                     bool orig_dir) {
   uint8 l3_proto = nfct_get_attr_u8(conntrack_event, ATTR_L3PROTO);
-  string l3_conntrack;
+  uint8 l4_proto = nfct_get_attr_u8(conntrack_event, ATTR_L4PROTO);
+  uint16 src_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_SRC));
+  uint16 dst_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_DST));
 
   if (l3_proto == AF_INET) {
     uint32 src_address = nfct_get_attr_u32(conntrack_event, ATTR_IPV4_SRC);
     uint32 dst_address = nfct_get_attr_u32(conntrack_event, ATTR_IPV4_DST);
-    l3_conntrack = StringPrintf(
-        "src=%s dst=%s",
+
+    return StringPrintf(
+        "%s src=%s dst=%s sport=%d dport=%d",
+        sprintf_protocol(l4_proto),
         sprintf_ipv4_address(orig_dir ? src_address : dst_address).c_str(),
-        sprintf_ipv4_address(orig_dir ? dst_address : src_address).c_str());
+        sprintf_ipv4_address(orig_dir ? dst_address : src_address).c_str(),
+        orig_dir ? src_port : dst_port,
+        orig_dir ? dst_port : src_port);
   } else if (l3_proto == AF_INET6) {
     const void* src_address = nfct_get_attr(conntrack_event, ATTR_IPV6_SRC);
     const void* dst_address = nfct_get_attr(conntrack_event, ATTR_IPV6_DST);
-    l3_conntrack = StringPrintf(
-        "src=%s dst=%s",
+
+    return StringPrintf(
+        "%s src=%s dst=%s sport=%d dport=%d",
+        sprintf_protocol(l4_proto),
         sprintf_ipv6_address(orig_dir ? src_address : dst_address).c_str(),
-        sprintf_ipv6_address(orig_dir ? dst_address : src_address).c_str());
+        sprintf_ipv6_address(orig_dir ? dst_address : src_address).c_str(),
+        orig_dir ? src_port : dst_port,
+        orig_dir ? dst_port : src_port);
   } else {
-    l3_conntrack = StringPrintf("l3-unk-%d", l3_proto);
+    return StringPrintf("l3-unk-%d", l3_proto);
   }
-
-  uint8 l4_proto = nfct_get_attr_u8(conntrack_event, ATTR_L4PROTO);
-  uint16 src_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_SRC));
-  uint16 dst_port = ntohs(nfct_get_attr_u16(conntrack_event, ATTR_PORT_DST));
-  return StringPrintf("%s %s sport=%d dport=%d",
-                      sprintf_protocol(l4_proto).c_str(),
-                      l3_conntrack.c_str(),
-                      orig_dir ? src_port : dst_port,
-                      orig_dir ? dst_port : src_port);
 }
-
-
-
-

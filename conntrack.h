@@ -149,10 +149,10 @@ class ConnTrack {
   // Number of seconds during which a conntrack without any new packet is kept
   // in the conntrack table. Prevents missed DESTROY events from exhausting
   // memory.
-  static const int kOldConntrackLifetime = 60;  // 6 hours.
+  static const int kOldConntrackLifetime = 3600 * 6;  // 6 hours.
 
   // Number of seconds between two conntrack garbage collections.
-  static const int kGCInterval = 30;
+  static const int kGCInterval = 3600;
 
   // Static data used to compute the key.
   static const char* kProtoNames[IPPROTO_MAX];

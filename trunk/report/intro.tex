@@ -1,4 +1,4 @@
-Pour ce projet, il y avait deux angles d'attaques possibles : réaliser un module noyau pour netfilter, ou bien réaliser un extension de netfilter en userspace (c'est la stratégie employée par la future version de l7-filter).
+Pour ce projet, il y avait deux angles d'attaques possibles : réaliser un module noyau pour \verb+netfilter+, ou bien réaliser un extension de \verb+netfilter+ en userspace (c'est la stratégie employée par la future version de \verb+l7-filter+).
 Nous avons choisi la solution userspace car nous pensons qu'elle est clairement préférable ; elle est en particulier plus simple à développer (pas besoin de
 redémarrer le noyau pour chaque test échoué), elle est plus fiable (un
 crash du démon userspace ne fait pas paniquer le noyau), et elle
@@ -6,4 +6,4 @@ permet d'utiliser toutes les librairies existantes, en particulier les
 librairies de regexp (ce que ne permet pour ainsi dire pas un module
 noyau).\\
 
-Pour notre projet nous nous sommes inspiré de l7-filter-userspace \cite{RW}.
+Pour notre projet nous nous sommes inspiré de \verb+l7-filter-userspace+ \cite{RW}.

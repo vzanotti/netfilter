@@ -1,8 +1,4 @@
-L'objectif de ce projet est de développer un module Netfilter permettant de faire du filtrage sur la couche 7 (filtrage applicatifapplicatif).
-
-L'objectif de ce projet est de développer une extension à Netfilter qui permet de mettre en place des décisions de filtrage (\verb+DROP+, \verb+REJECT+, \verb+ACCEPT+) en fonction du contenu de la couche applicative. L’utilisation de cette extension permet de mettre en place des règles fines de contrôle des connexions, par exemple « autorisation des fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF uniquement ». L’aspect journal d’événement doit être regardé. En effet, il est souhaitable que des évènements puissent être remontés en fonction des critères de filtrage. Les étudiants pourront essayer d’intégrer une vérification de champ basé sur des expressions régulières.
-Le choix du protocole est laissé à l’initiative des élèves, cependant nous suggérons HTTP ou FTP.
-Les développements seront sous licence libre de type GNU GPL ou BSD.
+L'objectif de ce projet est de développer un module \verb+netfilter+ pour faire du filtrage sur la couche 7 (filtrage applicatif). Plus précisemment, c'est de développer une extension à \verb+netfilter+ qui permet de mettre en place des décisions de filtrage (\verb+DROP+, \verb+REJECT+, \verb+ACCEPT+) en fonction du contenu de la couche applicative. L’utilisation de cette extension autorise l'utilisation de règles fines de contrôle des connexions, par exemple « autorisation des fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF uniquement ». Il est aussi intéressant d'avoir une une vérification de champ basé sur des expressions régulières. Les protocoles supportés seront HTTP et FTP. Les développements seront sous licence libre GNU GPLv2.
 
 L'idée est donc d'arriver à :
 \begin{itemize}
@@ -10,7 +6,7 @@ L'idée est donc d'arriver à :
 \item \verb+iptables -A FORWARD -p tcp -m ftpfilter --function get+\\
 \verb+--filetype pdf -j ACCEPT+\\
 \verb+iptables -A FORWARD -p tcp -m ftpfilter --function list+\\
-\verb+--filetype pdf -j ACCEPT+ : le module "webfilter" n'autorise que les fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF.
+\verb+--filetype pdf -j ACCEPT+ : le module \og webfilter \fg{} n'autorise que les fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF.
 \end{itemize}
 
-La possibilité de journaliser les évènements est aussi importante, la cause du rejet d'une requête doit être spécifiée (exemple : URL de taille $>$ 255) 
+La possibilité de journaliser les évènements est aussi importante. En effet, il est souhaitable que des évènements puissent être remontés en fonction des critères de filtrage. La cause du rejet d'une requête doit donc être spécifiée (exemple : URL de taille $>$ 255) 

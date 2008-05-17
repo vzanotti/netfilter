@@ -38,8 +38,11 @@ void SplitStringIntoKeyValuePairs(const string& line,
                                   vector<pair<string, string> >* kv_pairs);
 
 string StringPrintfV(const char* format, va_list ap);
-
 string StringPrintf(const char* format, ...)
     __attribute__((format(printf,1,2)));
+
+void SStringPrintfV(string* str, const char* format, va_list ap);
+void SStringPrintf(string* str, const char* format, ...)
+    __attribute__((format(printf,2,3)));
 
 #endif  // BASE_UTIL_H__

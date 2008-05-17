@@ -24,7 +24,11 @@
 #include "classifier.h"
 #include "conntrack.h"
 #include "packet.h"
+#include <set>
 #include <arpa/inet.h>
+#include <sys/time.h>
+
+using std::set;
 
 //
 // Connection tracking key creation helpers.
@@ -74,6 +78,16 @@ string sprintf_ipv6_address(const void* address) {
 }
 
 //
+// Walltime helper.
+//
+static double WallTime() {
+  struct timeval result;
+  gettimeofday(&result, NULL);
+
+  return double(result.tv_sec) + double(result.tv_usec) / 1000000.0;
+}
+
+//
 // Implementation of the Connection class.
 //
 Connection::Connection(bool conntracked, Classifier* classifier)
@@ -82,6 +96,7 @@ Connection::Connection(bool conntracked, Classifier* classifier)
     packets_egress_(0), packets_ingress_(0),
     bytes_egress_(0), bytes_ingress_(0),
     buffer_egress_(), buffer_ingress_(),
+    last_packet_(-1),
     ref_counter_(1), content_lock_() {
   Acquire();
   if (classifier) {
@@ -98,6 +113,10 @@ Connection::~Connection() {
     delete classifier_;
     classifier_ = NULL;
   }
+}
+
+void Connection::touch() {
+  last_packet_ = WallTime();
 }
 
 void Connection::update_packet_orig(const char* data, int32 data_len) {
@@ -195,7 +214,8 @@ ConnTrack::ConnTrack(Classifier* classifier)
     : classifier_(classifier),
       connections_(),
       connections_lock_(),
-      must_stop_(false) {
+      must_stop_(false),
+      last_gc_(-1) {
   // Sets up the conntrack events listener.
   conntrack_event_handler_ = nfct_open(
       CONNTRACK,
@@ -356,6 +376,29 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
     return NFCT_CB_CONTINUE;
   }
 
+  // Garbage collects the old conntrack, when required.
+  if (WallTime() > last_gc_ + kGCInterval) {
+    WriterMutexLock ml(&connections_lock_);
+    last_gc_ = WallTime();
+
+    double expiration_time = last_gc_ - kOldConntrackLifetime;
+    set<string> gckeys;
+    for (hash_map<string, Connection*>::iterator it = connections_.begin();
+         it != connections_.end(); ++it) {
+      if (it->second != NULL) {
+        if (it->second->last_packet() > 0 &&
+            it->second->last_packet() < expiration_time) {
+          gckeys.insert(it->first);
+        }
+      }
+    }
+
+    LOG(INFO, "Conntrack garbage collection: removed %d items.", gckeys.size());
+    for (set<string>::iterator it = gckeys.begin(); it != gckeys.end(); ++it) {
+      connections_.erase(*it);
+    }
+  }
+
   // Creates a new connection on new conntrack item.
   if (type == NFCT_T_NEW) {
     string key = get_conntrack_key(conntrack_event, true);
@@ -396,9 +439,12 @@ int ConnTrack::handle_conntrack_event(nf_conntrack_msg_type type,
     string key = get_conntrack_key(conntrack_event, true);
 
     WriterMutexLock ml(&connections_lock_);
-    if (connections_[key] != NULL) {
-      connections_[key]->Destroy();
-      connections_.erase(key);
+    hash_map<string, Connection*>::iterator connection = connections_.find(key);
+    if (connection != connections_.end()) {
+      if (connection->second != NULL) {
+        connection->second->Destroy();
+      }
+      connections_.erase(connection);
     }
   }
 

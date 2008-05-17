@@ -135,3 +135,19 @@ string StringPrintf(const char* format, ...) {
   va_end(ap);
   return result;
 }
+
+void SStringPrintfV(string* str, const char* format, va_list ap) {
+  char buffer[1024];
+  va_list backup_ap;
+  va_copy(backup_ap, ap);
+  vsnprintf(buffer, sizeof(buffer), format, backup_ap);
+  va_end(backup_ap);
+  str->assign(buffer);
+}
+
+void SStringPrintf(string* str, const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  SStringPrintfV(str, format, ap);
+  va_end(ap);
+}

@@ -164,7 +164,9 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
 
   // Determines the conntrack keys for the packet, and fetches the corresponding
   // Connection object from the conntrack table.
-  pair<string, string> conntrack_keys = conntrack_->get_packet_keys(packet);
+  pair<string, string> conntrack_keys;
+  conntrack_->get_packet_keys(packet, &conntrack_keys);
+
   bool direction_orig = true;
   Connection* connection =
       conntrack_->get_connection_or_create(conntrack_keys, direction_orig);

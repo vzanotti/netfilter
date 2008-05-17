@@ -171,7 +171,7 @@ class ConnTrack {
   // netfilter-queue headers).
   // The first key will be the "forward direction key" (for when the @p packet
   // is a src->dst packet), the second will be the "backward direction packet".
-  static pair<string, string> get_packet_keys(const Packet& packet);
+  static void get_packet_keys(const Packet& packet, pair<string, string>* keys);
 
   // Static callback for the conntrack event listener.
   // Calls the handle_conntrack_event of the @p conntrack_object, or returns

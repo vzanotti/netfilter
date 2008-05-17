@@ -47,7 +47,7 @@ class Connection {
  public:
   // Limits above which the classifier is destroyed, and the connection is
   // classified as "unmatched".
-  static const uint32 kMaxBufferSize = 16 * (1 << 10);  // 16k
+  static const uint32 kMaxBufferSize = 64 * (1 << 10);  // 64k
 
   explicit Connection(bool conntracked, Classifier* classifier);
   ~Connection();
@@ -71,6 +71,10 @@ class Connection {
   // "original" means src->dst, "repl" means dst->src.
   void update_packet_orig(const char* data, int32 data_len);
   void update_packet_repl(const char* data, int32 data_len);
+
+  // Updates the last_packet timestamp. Last packet timestamp accessor.
+  void touch();
+  double last_packet() const { return last_packet_; }
 
   // Reverses the ConnectionClassifier object, for when conntrack started using
   // the wrong ORIG & REPL directions.
@@ -124,6 +128,9 @@ class Connection {
   string buffer_egress_;
   string buffer_ingress_;
 
+  // Timestamp of last received packet.
+  double last_packet_;
+
   // Thread-safety.
   AtomicWord ref_counter_;
   Mutex content_lock_;
@@ -139,6 +146,14 @@ class Connection {
 //    "<proto> src=<src> dst=<dst> sport=<sport> dport=<dport>"
 class ConnTrack {
  public:
+  // Number of seconds during which a conntrack without any new packet is kept
+  // in the conntrack table. Prevents missed DESTROY events from exhausting
+  // memory.
+  static const int kOldConntrackLifetime = 60;  // 6 hours.
+
+  // Number of seconds between two conntrack garbage collections.
+  static const int kGCInterval = 30;
+
   // Static data used to compute the key.
   static const char* kProtoNames[IPPROTO_MAX];
 
@@ -212,6 +227,9 @@ class ConnTrack {
   hash_map<string, Connection*> connections_;
   Mutex connections_lock_;
   bool must_stop_;
+
+  // Timestamp of last garbage collection.
+  double last_gc_;
 
   DISALLOW_EVIL_CONSTRUCTORS(ConnTrack);
 };

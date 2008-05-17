@@ -178,6 +178,9 @@ int Queue::handle_packet(nfq_q_handle* queue_handle,
     connection->update_packet_repl(packet.payload(), packet.payload_size());
   }
 
+  // "Touches" the conntrack to prevent expiration.
+  connection->touch();
+
   // Classifies the packet.
   uint32 local_mark = connection->classification_mark();
   connection->Release();

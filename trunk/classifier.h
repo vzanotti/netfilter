@@ -42,7 +42,9 @@ enum ClientServerMode {
   INGRESS_IS_CLIENT
 };
 
-// TODO: add comments
+// Classifies a connection based on its ingress & egress buffer. It works
+// directly with the Connection object, and uses its buffers to realize the
+// classification.
 class ConnectionClassifier {
  public:
   // Constructs the object from the Classifier (the url classifier), and a
@@ -107,7 +109,9 @@ class ConnectionClassifier {
   DISALLOW_EVIL_CONSTRUCTORS(ConnectionClassifier);
 };
 
-// TODO: add comments
+// Identifies a classification rule, that is the contraints on the protocol, on
+// the protocol method, and on the URL. It is assigned a specific mark which is
+// supposed to be returned when the connectin matches this connection.
 class ClassificationRule {
  public:
   // Types of URL matched by the filter.
@@ -163,7 +167,8 @@ class ClassificationRule {
   DISALLOW_EVIL_CONSTRUCTORS(ClassificationRule);
 };
 
-// TODO: add comments
+// The global classifier objects, which holds the list of active classification
+// rules. Supposed to be used a singleton.
 class Classifier {
  public:
   // Special meaning classification marks.

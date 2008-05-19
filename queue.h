@@ -26,7 +26,10 @@ extern "C" {
 #include <libnetfilter_queue/libnetfilter_queue.h>
 }
 
-// TODO: add comments
+// NFQUEUE processing class.
+// The Queue object opens a socket on the appropriate NFQUEUE, listens for
+// packets, transmits them to the classifier, and returns them with the
+// classification verdict mark.
 class Queue {
  public:
   // Size of the input buffer; should be large enough to handle any packet.

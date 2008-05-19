@@ -40,7 +40,8 @@ using std::hash_map;
 class Classifier;
 class ConnectionClassifier;
 
-// TODO: add comments
+// The Connection class holds information for every connection; it especially
+// stores ingress & egress buffers & counters, and supports the classification.
 // Provided the Acquire/Release methods are used correctly, the object is
 // thread-safe.
 class Connection {
@@ -138,7 +139,9 @@ class Connection {
   DISALLOW_EVIL_CONSTRUCTORS(Connection);
 };
 
-// TODO: add comments
+// The connection tracking mechanism. Opens a socket on the conntrack netlink,
+// maintains a local copy of the conntrack table using the conntrack event, and
+// returns the Connection objects to the Queue class.
 // Format of conntrack keys:
 //   Conntrack elements are identified by a string, named key, which uniquely
 //   identifies the conntrack item, and which is easily derived from a matched

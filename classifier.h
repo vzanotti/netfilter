@@ -68,13 +68,16 @@ class ConnectionClassifier {
   // Tries to guess the protocol in the two in/egress buffers.
   // Returns UNKNOWN if unknown, HTTP/FTP if http/ftp, or OTHER if the
   // connection was identified as not using in http/ftp protocol.
-  ConnectionProtocol guess_protocol() const;
+  ConnectionProtocol guess_protocol();
 
   // Updates the the classifier status with the latest buffer update.
   void update_ftp();
   void update_http();
 
   // HTTP/FTP protocol matcher internal functions.
+  void ftp_handle_buffer(bool ingress);
+  bool ftp_parse_request_line(const string& line,
+                              string* method, string* url) const;
   void http_handle_buffer(bool ingress);
   bool http_parse_request_line(const string& line,
                                string* method, string* url) const;

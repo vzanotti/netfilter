@@ -34,6 +34,13 @@ static const boost::regex http_response_line(
     "^HTTP(/[0-9\\.]+)? [0-9]+",
     boost::regex_constants::extended | boost::regex_constants::icase);
 
+static const boost::regex ftp_server_line(
+    "^2[0-9][0-9] .*$",
+    boost::regex_constants::extended | boost::regex_constants::icase);
+static const boost::regex ftp_request_line(
+    "^\\s*(RETR|STOR|STOU|APPE|REST) (.*)\r?$",
+    boost::regex_constants::extended | boost::regex_constants::icase);
+
 // Puts the line starting at @p start_pos in the @p buffer, and returns
 // the next line position, or returns string::npos if no line is found.
 // A line can end with any of \r and \n.
@@ -111,7 +118,7 @@ bool ConnectionClassifier::update() {
   return classified_;
 }
 
-ConnectionProtocol ConnectionClassifier::guess_protocol() const {
+ConnectionProtocol ConnectionClassifier::guess_protocol() {
   // Indicates whether the protocol-specific matchers were able to rule
   // negatively with enough evidences or not.
   bool enough_material = true;
@@ -145,8 +152,38 @@ ConnectionProtocol ConnectionClassifier::guess_protocol() const {
   }
 
   // Looks for ftp-specific patterns.
-  // TODO: add ftp-matching logic
+  bool got_lines =
+      connection_->buffer_ingress().size() > 0 &&
+      connection_->buffer_egress().size() > 0;
+  if (connection_->buffer_ingress().size() > 0) {
+    string line;
+    if (get_line(connection_->buffer_ingress(), ingress_buffer_start(), &line)) {
+      if (boost::regex_match(line, ftp_server_line)) {
+        direction_hint_ = INGRESS_IS_SERVER;
+        return FTP;
+      }
+    } else {
+      got_lines = false;
+    }
+  }
+  
+  if (connection_->buffer_egress().size() > 0) {
+    string line;
+    if (get_line(connection_->buffer_egress(), egress_buffer_start(), &line)) {
+      if (boost::regex_match(line, ftp_server_line)) {
+        direction_hint_ = INGRESS_IS_CLIENT;
+        return FTP;
+      }
+    } else {
+      got_lines = false;
+    }
+  }
+  
+  if (!got_lines) {
+    enough_material = false;
+  }
 
+  // Default processing when no match is found.
   if (enough_material) {
     return OTHER;
   }
@@ -154,9 +191,57 @@ ConnectionProtocol ConnectionClassifier::guess_protocol() const {
 }
 
 void ConnectionClassifier::update_ftp() {
-  // TODO: add ftp-matching logic
+  // Note: connection direction is already known (set by guess_protocol).
+  if (direction_hint_ == INGRESS_IS_CLIENT) {
+    egress_buffer_hint_ = connection_->bytes_egress();
+    ftp_handle_buffer(true);
+  } else {
+    ingress_buffer_hint_ = connection_->bytes_ingress();
+    ftp_handle_buffer(false);
+  }
 }
 
+void ConnectionClassifier::ftp_handle_buffer(bool ingress) {
+  const string& buffer =
+      (ingress ? connection_->buffer_ingress() : connection_->buffer_egress());
+  size_t next_line = (ingress ? ingress_buffer_start() : egress_buffer_start());
+  
+  size_t processed = 0;
+  string line;
+  for (; (next_line = get_line(buffer, next_line, &line)) != string::npos;) {
+    processed = next_line;
+    
+    string method, url;
+    if (ftp_parse_request_line(line, &method, &url)) {
+      DLOG("FTP found with m=%s, u=%s", method.c_str(), url.c_str());
+      mark_ = classifier_->get_classification(ClassificationRule::FTP,
+                                              method, url);
+    }
+  }
+  
+  if (ingress) {
+    ingress_buffer_hint_ += processed;
+  } else {
+    egress_buffer_hint_ += processed;
+  }
+}
+
+bool ConnectionClassifier::ftp_parse_request_line(const string& line,
+                                                  string* method,
+                                                  string* url) const {
+  boost::smatch what;
+  if (!boost::regex_match(line, what, ftp_request_line)) {
+    return false;
+  }
+
+  if (method) {
+    method->assign(what[1]);
+  }
+  if (url) {
+    url->assign(what[2]);
+  }
+  return true;
+}
 
 void ConnectionClassifier::update_http() {
   // The http classifier is only using the very first line of the buffer,

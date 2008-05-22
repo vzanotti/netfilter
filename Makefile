@@ -48,8 +48,11 @@ urlfilter: urlfilter.cc objs/classifier.o objs/conntrack.o objs/packet.o objs/qu
 	$(CPP) $(CPPFLAGS) $(LDFLAGS) -o $@ $+
 
 # Report.
-report.pdf:
+report.pdf: report/rapport.bll
 	(cd report; pdflatex -interaction=batchmode rapport.tex > /dev/null)
+
+report/rapport.bll: report/biblio.bib
+	(cd report; bibtex rapport > /dev/null)
 
 # Presentation.
 presentation.pdf:

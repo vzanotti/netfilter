@@ -1,12 +1,14 @@
-L'objectif de ce projet est de développer un module \verb+netfilter+ pour faire du filtrage sur la couche 7 (filtrage applicatif). Plus précisemment, c'est de développer une extension à \verb+netfilter+ qui permet de mettre en place des décisions de filtrage (\verb+DROP+, \verb+REJECT+, \verb+ACCEPT+) en fonction du contenu de la couche applicative. L’utilisation de cette extension autorise l'utilisation de règles fines de contrôle des connexions, par exemple « autorisation des fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF uniquement ». Il est aussi intéressant d'avoir une une vérification de champ basé sur des expressions régulières. Les protocoles supportés seront HTTP et FTP. Les développements seront sous licence libre GNU GPLv2.
+L'objectif de ce projet est donc de développer un module \verb+netfilter+ pour faire du filtrage sur la couche 7 (filtrage applicatif). Plus précisemment, il consiste en la création d'une extension à \verb+netfilter+ qui permette de mettre en place des décisions de filtrage (\verb+DROP+, \verb+REJECT+, \verb+ACCEPT+) en fonction du contenu de la couche applicative.
+
+Elle aura pour but d'autoriser l'utilisation de règles très fines de contrôle des connexions, par exemple « autorisation des fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF uniquement », mais aussi de pouvoir filtrer sur un champ basé sur des expressions régulières. Les protocoles supportés seront HTTP et FTP et les développements seront sous licence libre GNU GPLv2.
 
 L'idée est donc d'arriver à :
 \begin{itemize}
-\item \verb+iptables -A FORWARD -p tcp -m webfilter --function get+\\ \verb+--urlsizemax 255 -j ACCEPT+ : le module "webfilter" n'autorise que la fonction \verb+GET+ avec une URL de taille max 255 ;
+\item \verb+iptables -A FORWARD -p tcp -m webfilter --function get+\\ \verb+--urlsizemax 255 -j ACCEPT+ : le module \og webfilter \fg{} n'autorise que la fonction \verb+GET+ avec une URL de taille max 255 ;
 \item \verb+iptables -A FORWARD -p tcp -m ftpfilter --function get+\\
 \verb+--filetype pdf -j ACCEPT+\\
 \verb+iptables -A FORWARD -p tcp -m ftpfilter --function list+\\
-\verb+--filetype pdf -j ACCEPT+ : le module \og webfilter \fg{} n'autorise que les fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF.
+\verb+--filetype pdf -j ACCEPT+ : le module \og webfilter \fg{} n'autorise que les fonctions \verb+LIST+ et \verb+GET+ sur les fichiers PDF.
 \end{itemize}
 
-La possibilité de journaliser les évènements est aussi importante. En effet, il est souhaitable que des évènements puissent être remontés en fonction des critères de filtrage. La cause du rejet d'une requête doit donc être spécifiée (exemple : URL de taille $>$ 255) 
+La possibilité de journaliser les évènements est aussi primordiale. En effet, il est indispensable que des évènements puissent être remontés en fonction des critères de filtrage. La cause du rejet d'une requête doit donc être spécifiée, par exemple, \og URL de taille $>$ 255 \fg{}.

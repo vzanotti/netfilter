@@ -12,15 +12,13 @@ interprétation (\verb+packet.cc+), et leur mise en relation avec un conntrack
 \item un fichier de base permettant le lancement des thread, un autre parsant le fichier de configuration et initialisant le classifier.
 \end{itemize}
 
-Nous avons utilisé la \verb+libnetfilter_conntrack+ pour
-récupérer les entrées conntrack existantes du noyau, et afin de maintenir une table locale (cela évite de se poser la question de
-la suppression des vieilles entrées).
-
 \subsection{Fonctionnement du logiciel}
+Nous avons utilisé la \verb+libnetfilter_conntrack+ pour
+récupérer les entrées conntrack existantes du noyau, et afin de maintenir une table locale dans le but d'éviter de se poser la question de la suppression des vieilles entrées.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\textwidth]{report/schema2.png}\\
+\includegraphics[width=\textwidth]{schema2.png}\\
 \title{Fonctionnement du module}
 \end{figure}
 
@@ -28,7 +26,7 @@ la suppression des vieilles entrées).
 \noindent Légende du schéma :
 
 \begin{enumerate}
-\item Maintien d'une copie locale de la base conntrack du noyau, grâces aux \og events \fg{} de la \verb+libnetfilter_conntrack+.
+\item Maintien d'une copie locale de la base conntrack du noyau, grâce aux \og events \fg{} de la \verb+libnetfilter_conntrack+.
 \item Récupération des paquets envoyés sur \verb+NFQUEUE+ via la \verb+libnetfilter_queue+.
 \item Récupération, pour chaque paquet, des informations de conntrack existantes.
 \item Retour des informations de conntrack pour le paquet, en particulier le contenu des paquets précédents, pour permettre la classification.
@@ -36,7 +34,6 @@ la suppression des vieilles entrées).
 \item Réinjection du paquet et d'une \og mark \fg{} de classification dans la chaîne de filtrage netfilter du noyau.
 \end{enumerate}
 \end{footnotesize}
-
 
 Il y a deux threads ; le premier (cf. \verb+ConnTrack::Run()+) écoute sur un
 \verb+netfilter_netlink+, reçoit les mises à jour de la table conntrack du noyau, et
@@ -54,14 +51,11 @@ Le classifier regarde les buffers d'une connection à chaque fois que les buffer
 partie du buffer lui est encore utile, pour que le conntrack puisse
 purger la partie inutile du buffer.\\
 
-
-
 Le cheminement des paquets, avec une extension en userspace, sera le suivant :\\
 filtrage \verb+iptables+ et envoi vers la target \verb+NFQUEUE+\\
 \verb+->+ récupération par le démon userspace, classification, et apposition d'une mark\\
 \verb+->+ retour dans le noyau vers la chaîne \verb+iptables+ suivante (\verb+POSTROUTING+ par exemple si le paquet a été intercepté dans la chaine \verb+FORWARD+)\\
 \verb+->+ éventuel refiltrage (en utilisant \verb+-m mark+ pour filtrer sur la mark).
-
 
 \subsection{Quelques remarques et comparaisons avec l7-filter}
 Le \verb+l7-filter+ userspace utilisait un conntrack fait main alors que nous utilisons le conntrack du noyau. Cela devrait être plus efficace parce que cela permettra dans quasiment tous les cas de savoir qui est le client qui est le serveur à l'exception du cas où un paquet arrive sur \og queue \fg{} avant que l'information de conntrack n'arrive dans l'autre thread.\\
@@ -70,9 +64,9 @@ Une fois qu'un paquet a été envoyé à \verb+NFQUEUE+, il ne peut pas passer
 tant qu'un démon userspace ne l'a pas accepté ; donc si notre application est
 DOSsée et plante, le pirate aura perdu puisque plus rien ne passera.\\
 
-Il y a un buffer-size limit. Cela fait en sorte que si le
+Il y a une limite sur la taille du buffer (buffer-size limit). Cela fait en sorte que si le
 buffer d'une connection dépasse une certaine taille, la connection
 passe en NoMatch (si le BufferHint est bien respecté par le
 classifier, cela n'arrivera pas dans les cas qui nous intéressent).\\
 
-Notre programme supporte l'IPv6 alors que \verb+l7-filter+ ne le supportait pas.
+Par ailleurs, notre programme supporte l'IPv6 alors que \verb+l7-filter+ ne le supportait pas.

@@ -8,15 +8,15 @@
 
 
 L'architecture de Netfilter peut se résumer à une série d'accroches
-(``hooks'') qui permettent de brancher des modules de traitement de
+(\og hooks \fg{}) qui permettent de brancher des modules de traitement de
 paquets IP à divers endroits le long de leur transit à travers la pile
 réseau du noyau, comme détaillé sur la fig \ref{NF}. Sur cette figure,
 les paquets arrivent en 1 après avoir passé quelques tests
-élémentaires de sanité (checksum IP correct, etc..).
+élémentaires de sanité (checksum IP correct, etc\ldots).
 
-\begin{figure}
+\begin{figure}[h]
   \begin{center}
-    \includegraphics{report/netfilter.png}
+    \includegraphics{netfilter.png}
     \caption{Architecture de Netfilter pour l'IPv4}
     \label{NF}
   \end{center}
@@ -54,7 +54,7 @@ modification à la volée de la source ou de la destination d'un
 paquet. Enfin la table \textit{mangle} regroupe des règles de
 modification des autres entêtes IP ou TCP. Iptables est facilement
 extensible par d'autres modules noyau, ce qui permet de définir de
-nouvelles règles et de nouveau critères.
+nouvelles règles et de nouveaux critères.
 
 Le suivi de connections, en première approche, identifie les flux en
 fonctions des triplets IP source, port source et port de
@@ -113,9 +113,9 @@ marque servira à prendre une décision au niveau de l'accroche
 \textit{POSTROUTING} dans la table \textit{mangle}. Ceci est
 schématisé sur la figure \ref{schema1}.
 
-\begin{figure}
+\begin{figure}[h]
   \begin{center}
-    \includegraphics[scale=0.2]{report/schema1.png}
+    \includegraphics[scale=0.2]{schema1.png}
     \caption{Interaction entre Netfilter et notre filtre applicatif}
     \label{schema1}
   \end{center}

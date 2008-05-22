@@ -49,8 +49,8 @@ urlfilter: urlfilter.cc objs/classifier.o objs/conntrack.o objs/packet.o objs/qu
 
 # Report.
 report.pdf:
-	pdflatex -interaction=batchmode -output-directory=report rapport.tex > /dev/null
+	(cd report; pdflatex -interaction=batchmode rapport.tex > /dev/null)
 
 # Presentation.
 presentation.pdf:
-	pdflatex -interaction=batchmode -output-directory=presentation presentation.tex > /dev/null
+	(cd presentation; pdflatex -interaction=batchmode presentation.tex > /dev/null)

@@ -1,7 +1,7 @@
 \subsection{Organisation du programme}
   Le projet contient :
   \begin{itemize}
-    \item un \verb+README+, très complet avec entre autres les détails pour installer et configurer le programme ainsi que des explications et des exemples sur son utilisation ;
+    \item un \verb+README+, très complet avec, entre autres, les détails pour installer et configurer le programme ainsi que des explications et des exemples sur son utilisation ;
     \item un répertoire base, regroupant plusieurs librairies externes (sous
     licences compatibles GPLv2) ;
     \item un fichier de configuration ;
@@ -17,7 +17,7 @@
   réaliser quatre étapes distinctes. Tout d'abord, il s'agit de regrouper les paquets appartenant à une même
   connexion; ensuite il faut déterminer si le contenu de la connexion correspond à un protocole supporté;
   puis la méthode et l'url utilisées par le client (par exemple {\tt GET /foo/bar.pdf}) doivent être extraites
-  des paquets; enfin ces méthodes et cette url permettent de classifier la connexion, et de remonter l'information
+  des paquets; enfin ces méthodes et cette url permettent de classifier la connexion et de remonter l'information
   au noyau.
   
   \paragraph{Identification des paquets}
@@ -87,7 +87,7 @@
 \subsection{Fiabilité et limitations}
   L'objectif d'un classifier tel que celui-ci est principalement de repérer, limiter, voire interdire certaines requêtes basées sur les protocoles ftp ou http.
   Il doit donc éviter au maximum d'être contournable par un client. Plusieurs points sont à évaluer: la bonne interprétation du protocole concerné, la résistance à la
-  fragmentation de paquets, la résistance à l'inversion de paquets TCP, ou encore l'utilisation de version non-standard des protocoles (versions parfois supportées par
+  fragmentation de paquets, la résistance à l'inversion de paquets TCP, ou encore l'utilisation de versions non-standards des protocoles (versions parfois supportées par
   les serveurs).
   
   Pour ce qui est de la partie protocolaire, notre \emph{urlfilter} gère correctement le protocole ftp, en particulier grâce à une grande tolérance dans la détection
@@ -101,4 +101,4 @@
   
   Enfin, l'application est supposée résister aux attaques de types \emph{Denial of Service}, en limitant en particulier la quantité de données conservées pour une même connexion.
   En limitant à 64ko cette quantité, on évite qu'une connexion TCP spécialement conçue puisse entraîner la conservation d'un nombre non borné d'octets lors de la phase de
-  détermination du protocole (en effet cette phase nécessite à minima la présence d'une ligne complète dans l'un des deux buffers).
+  détermination du protocole; en effet cette phase nécessite à minima la présence d'une ligne complète dans l'un des deux buffers.

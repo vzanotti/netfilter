@@ -18,12 +18,12 @@ les paquets arrivent en 1 après avoir passé quelques tests
 Sur chacune de ces accroches on peut venir brancher des fonctions pour
 modifier ou filtrer les paquets. Chaque fonction ainsi branchée est
 assortie d'une priorité qui détermine dans quel ordre les fonctions
-sont appelées sur les paquets. Les fonctions standardes utilisées dans
+sont appelées sur les paquets. Les fonctions standards utilisées dans
 le noyau implémentent le filtrage et la modification de paquets
-(iptables), ainsi que le suivi de connections (conntrack).
+(iptables), ainsi que le suivi de connexions (conntrack).
 
-Iptables consiste un ensemble de règles de filtrage ou de modification
-de paquets regroupés en \textit{tables}. Celles-ci sont consultées
+Iptables consiste un ensemble de règles de filtrage ou de modifications
+de paquets regroupées en \textit{tables}. Celles-ci sont consultées
 lors du passage par certaines accroches.
 
 \begin{center}
@@ -49,13 +49,13 @@ modification des autres entêtes IP ou TCP. Iptables est facilement
 extensible par d'autres modules noyau, ce qui permet de définir de
 nouvelles règles et de nouveaux critères.
 
-Le suivi de connections, en première approche, identifie les flux en
+Le suivi de connexions, en première approche, identifie les flux en
 fonctions des triplets IP source, port source et port de
 destination. Le fait d'implémenter ce suivi dans un module séparé
 permet de réutiliser ces informations dans d'autres parties du
 noyau. Ainsi avec le module \textit{state} de iptables, on peut ainsi
 filter un paquet selon qu'il appartienne à un flux déjà connu
-(ESTABLISHED) ou s'il initie un nouveau (NEW). Le module conntrack est
+(ESTABLISHED) ou s'il en initie un nouveau (NEW). Le module conntrack est
 également capable de suivre certains protocoles qui utilisent
 plusieurs flux comme FTP ou IRC. Dans le module \textit{state}, de
 tels flux sont marqués RELATED.
@@ -77,8 +77,8 @@ pouvoir utiliser des expressions régulières pour identifier des URL ou
 des noms de fichiers, et donc pouvoir utiliser une librairie de
 gestion des expressions régulières. Dans le cas du module noyau de
 \textit{l7-filter}, le choix a été d'intégrer au module une librairie
-d'expressions régulières allégée mais pas vraiment très
-standarde. Enfin un bug ou une faille de sécurité dans un module noyau
+d'expressions régulières allégée mais pas réellement
+standard. Enfin un bug ou une faille de sécurité dans un module noyau
 peut compromettre ou crasher la machine sur laquelle il tourne.
 
 A contrario, il est possible d'utiliser la cible NFQUEUE de NetFilter
@@ -89,7 +89,7 @@ performances du traitement puisqu'il faut copier la totalité du paquet
 de la mémoire noyau vers la mémoire userspace et vice
 versa. Cependant, les avantages en termes de développement sont
 considérables puisqu'il est possible d'utiliser du C++ et des
-librairies d'expressions régulières complètes et standardes. Par
+librairies d'expressions régulières complètes et standards. Par
 ailleurs, un plantage du programme userspace n'entraînera pas tout le
 système avec lui.
 

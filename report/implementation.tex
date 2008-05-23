@@ -1,72 +1,104 @@
 \subsection{Organisation du programme}
-Le projet contient :
-\begin{itemize}
-\item un \verb+README+, avec le mode d'emploi pour installer les dépendances ;
-\item un répertoire base / avec plusieurs librairies externes (sous
-licences compatibles GPLv2) ;
-\item un fichier de configuration ;
-\item \verb+queue.h/cc+, \verb+packet.h/cc+ et \verb+conntrack.h/cc+ qui réalisent l'interception des paquets envoyés à \verb+NFQUEUE+ (\verb+queue.cc+), leur
-interprétation (\verb+packet.cc+), et leur mise en relation avec un conntrack
-(\verb+conntrack.cc+) ;
-\item \verb+classifier.h/cc+ qui sert à classer les paquets ;
-\item un fichier de base permettant le lancement des thread, un autre parsant le fichier de configuration et initialisant le classifier.
-\end{itemize}
+  Le projet contient :
+  \begin{itemize}
+    \item un \verb+README+, avec le mode d'emploi pour installer les dépendances ;
+    \item un répertoire base, regroupand plusieurs librairies externes (sous
+    licences compatibles GPLv2) ;
+    \item un fichier de configuration ;
+    \item \verb+queue.h/cc+, \verb+packet.h/cc+ et \verb+conntrack.h/cc+ qui réalisent l'interception des paquets envoyés à \verb+NFQUEUE+ (\verb+queue.cc+), leur
+    interprétation (\verb+packet.cc+), et leur mise en relation avec un conntrack
+    (\verb+conntrack.cc+) ;
+    \item \verb+classifier.h/cc+ qui sert à classer les paquets ;
+    \item un fichier de base permettant le lancement des thread, un autre parsant le fichier de configuration et initialisant le classifier.
+  \end{itemize}
 
 \subsection{Fonctionnement du logiciel}
-Nous avons utilisé la \verb+libnetfilter_conntrack+ pour
-récupérer les entrées conntrack existantes du noyau, et afin de maintenir une table locale dans le but d'éviter de se poser la question de la suppression des vieilles entrées.
+  Afin de réaliser son objectif de classification des connexions http et ftp, notre extension NetFilter doit
+  réaliser quatre étapes distinctes. Tout d'abord, il s'agit de regrouper les paquets appartenant à une même
+  connection; ensuite il faut déterminer si le contenu de la connexion correspond à un protocole supporté;
+  puis la méthode et l'url utilisées par le client (par exemple {\tt GET /foo/bar.pdf}) doivent être extraites
+  des paquets; enfin ces méthodes et cette url permettent de classifier la connexion, et de remonter l'information
+  au noyau.
+  
+  \paragraph{Identification des paquets}
+    Cette étape cruciale vise à rassembler les paquets appartenant à une même connexion, afin de pouvoir
+    les traiter simultanément. Plus précisement, il s'agit d'identifier la connexion de chaque paquet,
+    et d'aggréger son contenu aux données déjà transférées.
+    
+    Cette étape est réalisée grâce à l'utilisation de \verb+libnetfilter_conntrack+, qui nous permet de
+    maintenir en local une liste à jour des connexions connues par le noyau. L'identification d'un paquet
+    à une connexion se fait en utilisation une clé unique, déterminée à partir des adresses et ports source
+    et destination.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{schema2.png}\\
-\title{Fonctionnement du module}
-\end{figure}
+  \paragraph{Détermination du protocole}
+    Grâce à l'identification des connexions, il a été possible de disposer, pour chacune de ces connexions,
+    des buffers de données échangées entre les deux extrémités de la connexion.
+    
+    Cela permet alors, en utilisant des chaînes toujours présentes dans les protocoles analysés, de déterminer
+    le type de la connexion. Par exemple, une requête HTTP peut se repérer à la chaîne ``{\tt <method> <url> http/<http-version>}''
+    envoyée par le client, et à la réponse du serveur sous la forme ``{\tt <numerical-code> <message>}''.
 
-\begin{footnotesize}
-\noindent Légende du schéma :
+  \paragraph{Extraction de l'URL}
+    Dans le cas du protocole http, il s'agit d'une opération simple, qui utilise la première ligne du buffer egress (client
+    vers serveur). Cette ligne permet d'extraire la méthode (GET, POST, ...), ainsi que l'url de la ressource demandée.
+    
+    Le protocole ftp est plus complexe à gérer, puisque d'une part la requête n'est pas disponible dès la première ligne d'un des buffers,
+    et que d'autre part le client pourra légitimement accèder à plusieurs ressources, ce qui interdit une classification définitive.
+    L'analyseur du protocole FTP détermine donc quel coté de la connection est le client, puis, en analysant le buffer émis par le client,
+    repére les requêtes, et met à jour l'information de classification au fur et à mesure de l'interprétation des nouveau paquets.
+    
 
-\begin{enumerate}
-\item Maintien d'une copie locale de la base conntrack du noyau, grâce aux \og events \fg{} de la \verb+libnetfilter_conntrack+.
-\item Récupération des paquets envoyés sur \verb+NFQUEUE+ via la \verb+libnetfilter_queue+.
-\item Récupération, pour chaque paquet, des informations de conntrack existantes.
-\item Retour des informations de conntrack pour le paquet, en particulier le contenu des paquets précédents, pour permettre la classification.
-\item Classification basée exclusivement sur le contenu de la connexion.
-\item Réinjection du paquet et d'une \og mark \fg{} de classification dans la chaîne de filtrage netfilter du noyau.
-\end{enumerate}
-\end{footnotesize}
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{schema2.png}\\
+    \title{Fonctionnement du module}
+  \end{figure}
 
-Il y a deux threads ; le premier (cf. \verb+ConnTrack::Run()+) écoute sur un
-\verb+netfilter_netlink+, reçoit les mises à jour de la table conntrack du noyau, et
-maintient une copie locale.\\
+  \begin{footnotesize}
+    \noindent Légende du schéma :
+    \begin{enumerate}
+    \item Maintien d'une copie locale de la base conntrack du noyau, grâce aux \og events \fg{} de la \verb+libnetfilter_conntrack+.
+    \item Récupération des paquets envoyés sur \verb+NFQUEUE+ via la \verb+libnetfilter_queue+.
+    \item Récupération, pour chaque paquet, des informations de conntrack existantes.
+    \item Retour des informations de conntrack pour le paquet, en particulier le contenu des paquets précédents, pour permettre la classification.
+    \item Classification basée exclusivement sur le contenu de la connexion.
+    \item Réinjection du paquet et d'une \og mark \fg{} de classification dans la chaîne de filtrage netfilter du noyau.
+    \end{enumerate}
+  \end{footnotesize}
 
-Le deuxième (cf. \verb+Queue::Run()+) intercepte les paquets arrivant sur une
-\verb+NFQUEUE+ (via \verb+iptables+), les parse, détermine l'entrée conntrack
-correspondante (en demandant à une table partagée avec l'autre
-thread), récupère l'object \og Connection \fg{} correspondant, met à jour les
-deux buffers, puis appelle la méthode \verb+update+ du classifier ; enfin il
-accepte le paquet, en le marquant avec la mark déterminée par le
-classifier (ou une marque par défaut si pas de classifier).\\
+  \paragraph{Fonctionement pratique}
+    L'application a deux threads; le premier (cf. \verb+ConnTrack::Run()+) écoute sur un
+    \verb+netfilter_netlink+, reçoit les mises à jour de la table conntrack du noyau, et
+    maintient une copie locale.
+    
+    Le deuxième (cf. \verb+Queue::Run()+) intercepte les paquets arrivant sur une
+    \verb+NFQUEUE+ (via \verb+iptables+), les parse, détermine l'entrée conntrack
+    correspondante (en demandant à une table partagée avec l'autre
+    thread), récupère l'object \og Connection \fg{} correspondant, met à jour les
+    deux buffers, puis appelle la méthode \verb+update+ du classifier ; enfin il
+    accepte le paquet, en le marquant avec la mark déterminée par le
+    classifier (ou une marque par défaut si pas de classifier).
+    
+    Le classifier regarde les buffers d'une connection à chaque fois qu'ils sont mis à jour.
+    Il prend ensuite une décision (NoMatch, NoMatchYet ou une vraie décision) ; le classifier retourne aussi un \og buffer hint \fg{} au conntrack : c'est à dire qu'il indique quelle
+    partie du buffer lui est encore utile, pour que le conntrack puisse
+    purger la partie inutile du buffer.
 
-Le classifier regarde les buffers d'une connection à chaque fois que les buffers d'une connection à chaque fois qu'ils sont mis à jour. Il prend ensuite une décision (NoMatch, NoMatchYet ou une vraie décision) ; le classifier retourne aussi un \og buffer hint \fg{} au conntrack : c'est à dire qu'il indique quelle
-partie du buffer lui est encore utile, pour que le conntrack puisse
-purger la partie inutile du buffer.\\
-
-Le cheminement des paquets, avec une extension en userspace, sera le suivant :\\
-filtrage \verb+iptables+ et envoi vers la target \verb+NFQUEUE+\\
-\verb+->+ récupération par le démon userspace, classification, et apposition d'une mark\\
-\verb+->+ retour dans le noyau vers la chaîne \verb+iptables+ suivante (\verb+POSTROUTING+ par exemple si le paquet a été intercepté dans la chaine \verb+FORWARD+)\\
-\verb+->+ éventuel refiltrage (en utilisant \verb+-m mark+ pour filtrer sur la mark).
-
-\subsection{Quelques remarques et comparaisons avec l7-filter}
-Le \verb+l7-filter+ userspace utilisait un conntrack fait main alors que nous utilisons le conntrack du noyau. Cela devrait être plus efficace parce que cela permettra dans quasiment tous les cas de savoir qui est le client qui est le serveur à l'exception du cas où un paquet arrive sur \og queue \fg{} avant que l'information de conntrack n'arrive dans l'autre thread.\\
-
-Une fois qu'un paquet a été envoyé à \verb+NFQUEUE+, il ne peut pas passer
-tant qu'un démon userspace ne l'a pas accepté ; donc si notre application est
-DOSsée et plante, le pirate aura perdu puisque plus rien ne passera.\\
-
-Il y a une limite sur la taille du buffer (buffer-size limit). Cela fait en sorte que si le
-buffer d'une connection dépasse une certaine taille, la connection
-passe en NoMatch (si le BufferHint est bien respecté par le
-classifier, cela n'arrivera pas dans les cas qui nous intéressent).\\
-
-Par ailleurs, notre programme supporte l'IPv6 alors que \verb+l7-filter+ ne le supportait pas.
+\subsection{Fiabilité et limitations}
+  L'objectif d'un classifier tel que celui-ci est principalement de repérer, limiter, voire interdire certaines requêtes basées sur les protocoles ftp ou http.
+  Il doit donc éviter au maximum d'être contournable par un client. Plusieurs points sont à évaluer: la bonne interprétation du protocole concerné, la résistance à la
+  fragmentation de paquets, la résistance à l'inversion de paquets TCP, ou encore l'utilisation de version non-standard des protocoles (versions parfois supportées par
+  les serveurs).
+  
+  Pour ce qui est de la partie protocolaire, notre \emph{urlfilter} gère correctement le procole ftp, en particulier grâce à une grand tolérance dans la détection
+  des requêtes; l'analyseur ftp gère également la présence de plusieurs requêtes successives lors d'une même session ftp.\\
+  Notre analyseur http est par contre plus vulnérable; il ne gère en particulier par les requêtes en \emph{Keep-Alive}, qui permettent de packer plusieurs requêtes dans une
+  même connection.
+  
+  Grâce aux buffers de connections maintenus pour chaque connexion, l'application résiste nativement aux contournements par fragmentation des paquets, puisque ce n'est pas le
+  contenu de chaque paquet qui est analysé, par l'ensemble des données transférées. Par contre, les attaques par inversions de paquets ne sont pas gérées; le réordonnancement
+  des paquets est en effet un problème non-trivial, qui semble dépasser le cadre du projet.
+  
+  Enfin, l'application est supposée resister aux attaques de types \emph{Denial of Service}, en limitant en particulier la quantité de données conservées pour une même connexion.
+  En limitant à 64ko cette quantité, on évite qu'une connexion TCP spécialement conçue puisse entraîner la conservation d'un nombre non borné d'octets lors de la phase de
+  détermination du protocole (en effet cette phase nécessite à minima la présence d'une ligne compléte dans l'un des deux buffers).

@@ -1,8 +1,12 @@
-L'objectif de ce projet est donc de développer un module \verb+netfilter+ pour faire du filtrage sur la couche 7 (filtrage applicatif). Plus précisemment, il consiste en la création d'une extension à \verb+netfilter+ qui permette de mettre en place des décisions de filtrage (\verb+DROP+, \verb+REJECT+, \verb+ACCEPT+) en fonction du contenu de la couche applicative.
+L'objectif du projet, tel que défini par le sujet, était la réalisation d'une extension
+pour \verb+netfilter+, afin de permettre un filtrage applicatif (en particulier un filtrage
+pour les protocoles \verb+http+ et \verb+ftp+).
 
-Elle aura pour but d'autoriser l'utilisation de règles très fines de contrôle des connexions, par exemple « autorisation des fonctions \verb+LIST+ et \verb+GET+ sur fichiers PDF uniquement », mais aussi de pouvoir filtrer sur un champ basé sur des expressions régulières. Les protocoles supportés seront HTTP et FTP et les développements seront sous licence libre GNU GPLv2.
+L'interêt du projet est de pouvoir différencier différents types de connexion http ou ftp,
+pour permettre, entre autres, de les interdire, ou de limiter leur débit. Par exemple, l'extension
+devrait permettre de repérer « les requêtes de type \verb+GET+ sur des fichiers PDF en http ».
 
-L'idée est donc d'arriver à :
+L'extension devrait donc permettre une utilisation du type :
 \begin{itemize}
 \item \verb+iptables -A FORWARD -p tcp -m webfilter --function get+\\ \verb+--urlsizemax 255 -j ACCEPT+ : le module \og webfilter \fg{} n'autorise que la fonction \verb+GET+ avec une URL de taille max 255 ;
 \item \verb+iptables -A FORWARD -p tcp -m ftpfilter --function get+\\

@@ -1,3 +1,5 @@
+An url-based http/ftp filtering extension for NetFilter.
+
 Licensing:
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -14,6 +16,19 @@ Licensing:
 
   All third-party code used in this program is either licensed in GPLv2 by the
   author, or released with a GPLv2-compatible license.
+
+Authors:
+  This program was written by S. Jacob, J. Whitbeck and V. Zanotti as part of
+  an university project at TELECOM ParisTech (http://www.enst.fr/).
+
+Purpose:
+  This program offers url filtering capabilities for http and ftp connections.
+  Based on the NFQUEUE netfilter mechanism, it can intercept, parse, and
+  classify http and ftp connections using user-defined rules.
+
+  Although the classifier will resist to many bypass tricks (such as packet
+  fragmentation), it was not designed to handle tcp packet re-ordering, and
+  bypass by using HTTP's KeepAlive connections.
 
 Dependencies:
   libnetfilter-queue (http://www.netfilter.org/projects/libnetfilter_queue/)

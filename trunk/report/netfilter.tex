@@ -1,13 +1,6 @@
-\subsection{Principe du fonctionnement de Netfilter}
-%% - firewall\\
-%% - flot de paquets.\\
-%% - insertion de notre programme dans le flot.\\
-%% 2 schémas : \\
-%% - PacketFlow.png \cite{l7}\\
-%% - schema1.png
+\subsection{Principe du fonctionnement de NetFilter}
 
-
-L'architecture de Netfilter peut se résumer à une série d'accroches
+L'architecture de NetFilter peut se résumer à une série d'accroches
 (\og hooks \fg{}) qui permettent de brancher des modules de traitement de
 paquets IP à divers endroits le long de leur transit à travers la pile
 réseau du noyau, comme détaillé sur la fig \ref{NF}. Sur cette figure,
@@ -17,13 +10,13 @@ les paquets arrivent en 1 après avoir passé quelques tests
 \begin{figure}[h]
   \begin{center}
     \includegraphics{netfilter.png}
-    \caption{Architecture de Netfilter pour l'IPv4}
+    \caption{Architecture de NetFilter pour l'IPv4}
     \label{NF}
   \end{center}
 \end{figure}
 
 Sur chacune de ces accroches on peut venir brancher des fonctions pour
-modifier ou filter les paquets. Chaque fonction ainsi branchée est
+modifier ou filtrer les paquets. Chaque fonction ainsi branchée est
 assortie d'une priorité qui détermine dans quel ordre les fonctions
 sont appelées sur les paquets. Les fonctions standardes utilisées dans
 le noyau implémentent le filtrage et la modification de paquets
@@ -58,7 +51,7 @@ nouvelles règles et de nouveaux critères.
 
 Le suivi de connections, en première approche, identifie les flux en
 fonctions des triplets IP source, port source et port de
-destination. Le fait d'implementer ce suivi dans un module séparé
+destination. Le fait d'implémenter ce suivi dans un module séparé
 permet de réutiliser ces informations dans d'autres parties du
 noyau. Ainsi avec le module \textit{state} de iptables, on peut ainsi
 filter un paquet selon qu'il appartienne à un flux déjà connu
@@ -67,14 +60,9 @@ filter un paquet selon qu'il appartienne à un flux déjà connu
 plusieurs flux comme FTP ou IRC. Dans le module \textit{state}, de
 tels flux sont marqués RELATED.
 
-\subsection{Études des possibilités pour développer un module Netfilter}
-%% Description des deux possibilités existantes :\\
-%% - faire un module noyau ;\\
-%% - faire un programme userspace.\\\
+\subsection{Études des possibilités pour développer un module NetFilter}
 
-%% Comparaison point à point de ces deux solutions et justification de notre choix.
-
-Pour développer un module de filtrage applicatif pour Netfilter il
+Pour développer un module de filtrage applicatif pour NetFilter il
 existe deux approches possibles. Le projet \textit{L7-filter}
 \cite{l7} développe d'ailleurs les deux.
 
@@ -93,9 +81,9 @@ d'expressions régulières allégée mais pas vraiment très
 standarde. Enfin un bug ou une faille de sécurité dans un module noyau
 peut compromettre ou crasher la machine sur laquelle il tourne.
 
-A contrario, il est possible d'utiliser la cible NFQUEUE de Netfilter
+A contrario, il est possible d'utiliser la cible NFQUEUE de NetFilter
 pour déléguer le traitement d'un paquet à un programme userspace. Cela
-peut se faire à n'importe quelle accroche Netfilter au moyen de règles
+peut se faire à n'importe quelle accroche NetFilter au moyen de règles
 \textit{iptables} adaptées. Ceci pénalise inévitablement les
 performances du traitement puisqu'il faut copier la totalité du paquet
 de la mémoire noyau vers la mémoire userspace et vice
@@ -116,7 +104,7 @@ schématisé sur la figure \ref{schema1}.
 \begin{figure}[h]
   \begin{center}
     \includegraphics[scale=0.2]{schema1.png}
-    \caption{Interaction entre Netfilter et notre filtre applicatif}
+    \caption{Interaction entre NetFilter et notre filtre applicatif}
     \label{schema1}
   \end{center}
 \end{figure}

@@ -1,42 +1,37 @@
 \documentclass[french]{beamer}
-
-\usepackage[official]{eurosym}
-
-\usefonttheme[onlymath]{serif}
-
-\usetheme{lmac}
-
-\title[Module Netfilter de filtrage applicatif]{Développement d'un module Netfilter de filtrage applicatif}
-
-\author[\textsc{Jacob, Whitbeck, Zanotti}]{Stéphane \textsc{Jacob}\\John \textsc{Whitbeck}\\Vincent \textsc{Zanotti}}
-
-\institute[INF]{
-  INF 358\\
-  TÉLÉCOM ParisTech
- }
-
-\date[05/2008]{mai 2008}
+  \usepackage[official]{eurosym}
+  \usefonttheme[onlymath]{serif}
+  \usetheme{lmac}
 
 \begin{document}
-
+  \title[Module Netfilter de filtrage applicatif]{Développement d'un module Netfilter de filtrage applicatif}
+  \author[\textsc{Jacob, Whitbeck, Zanotti}]{Stéphane \textsc{Jacob}\\John \textsc{Whitbeck}\\Vincent \textsc{Zanotti}}
+  \institute[INF]{
+    INF 358\\
+    TÉLÉCOM ParisTech
+  }
+  \date[05/2008]{mai 2008}
 
 % FIRST PAGE
-\begin{frame}
-  \titlepage
-\end{frame}
+  \begin{frame}
+    \titlepage
+  \end{frame}
 
-\include{but}
+  \section<presentation>[]{}
+    \begin{frame}
+      \frametitle{Introduction : les enjeux du filtrage applicatif}
+    \end{frame}
 
-\include{implementation}
+  \include{principes}
+  \include{netfilter}
+  \include{implementation}
 
-\section<presentation>{}
-\begin{frame}
-  \begin{center}
-  \begin{Huge}
-  \textcolor{blue}{Questions ?}
-  \end{Huge}
-  \end{center}
-\end{frame}
-
-
+  \section<presentation>{}
+    \begin{frame}
+      \begin{center}
+        \begin{Huge}
+          \textcolor{blue}{Questions ?}
+        \end{Huge}
+      \end{center}
+    \end{frame}
 \end{document}

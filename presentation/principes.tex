@@ -22,7 +22,7 @@
     \frametitle{Fonctionnement d'un filtre applicatif}
     Fonctionnement d'un filtre transparent au niveau 7 (OSI):
     \begin{itemize}
-      \item<1-> Identification et groupage des packets par session TCP.\\
+      \item<1-> Identification et groupage des paquets par session TCP.\\
         \only<1>{\tt\scriptsize
           <tcp src=129.104.201.51 dst=87.98.164.72 sport=4242 dport=80> et \\
           <tcp src=87.98.164.72 dst=129.104.201.51 sport=80 dport=4242>
@@ -36,7 +36,7 @@
           \dots
         }
       \item<3-> Détection du protocole utilisé.
-      \item<4-> Extraction des information (protocol buffer).\\
+      \item<4-> Extraction des informations (protocol buffer).\\
         \only<4>{\tt\scriptsize
           proto=HTTP, method=GET, url=/abcd.pdf
         }

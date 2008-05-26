@@ -58,7 +58,6 @@
       \item Contournement via l'implémentation du protocole
         \begin{itemize}
           \item Contournement par exploitation du protocole
-          \item Contournement par leurre du détecteur de protocole
           \item Contournement par non-respect du protocole
         \end{itemize}
       \item Attaque \emph{Denial of Service} classique
@@ -70,15 +69,15 @@
     Idée: casser ``l'atomicité'' des échanges avec des petits paquets.
     \begin{itemize}
       \item<1-> Le protocole http est un protocole \emph{human readable}.
-      \item<2-> Une requête http normale passe dans un paquet TCP.\\
+      \item<1-> Une requête http normale passe dans un paquet TCP.\\
         {\small C'est à dire que {\tt sizeof(requete + headers) <= max payload size}}
-      \item<3-> Implémentation naïve: filtrage par paquets.
-      \item<4-> Attaque:\\
+      \item<1-> Implémentation naïve: filtrage par paquets.
+      \item<2-> Attaque:\\
         {\scriptsize
           Original: {\tt "GET /abcd.pdf HTTP/1.0"}\\
           Modifié:  {\tt "GE" "T /abcd.pdf HTT" "P/1.0"}
         }
-      \item<5-> Défense: utilisation de buffers egress/ingress pour la session TCP.
+      \item<3-> Défense: utilisation de buffers egress/ingress pour la session TCP.
     \end{itemize}
   \end{frame}
 
@@ -87,46 +86,73 @@
     Idée: réordonner les paquets TCP pour tromper le filtre.
     \begin{itemize}
       \item<1-> Support du réarrangement de paquets dans TCP.
-      \item<2-> Normalement:\\
+      \item<1-> Normalement:\\
         {\tt\scriptsize
           > pkt=1, payload="GET /abcd.pdf HTTP/1.0"
         }
-      \item<3-> Après fragmentation:\\
+      \item<2-> Après fragmentation:\\
         {\tt\scriptsize
           > pkt=1, payload="GE"\\
           > pkt=2, payload="T /abcd.pdf HTT"\\
           > pkt=3, payload="P/1.0"
         }
-      \item<4-> Après re-arrangement:\\
+      \item<3-> Après re-arrangement:\\
         {\tt\scriptsize
           > pkt=1, payload="GE"\\
           > pkt=3, payload="P/1.0"\\
           > pkt=2, payload="T /abcd.pdf HTT"
         }
-      \item<5-> Défense: rearrangement manuel, complexe, coûteux.
+      \item<4-> Défense: rearrangement manuel, complexe, coûteux.
     \end{itemize}
   \end{frame}
 
   \begin{frame}[t]
     \frametitle{Contournement par exploitation du protocole}
     Idée: exploiter des fonctionnalités obscures (ou pas) du protocole.
-    % Keepalive
-  \end{frame}
-
-  \begin{frame}[t]
-    \frametitle{Contournement par leurre du détecteur de protocole}
-    Idée: comettre des erreurs récupérables de nature à leurrer le détecteur.
-    % Commencer par une erreur en SMTP pour éviter le EHLO.
-    % Utiliser des lignes de requete extremement longues, type /././././.....
+    \begin{itemize}
+      \item<1-> Le protocole http a une fonctionnalité de sérialisation de requêtes.
+      \item<2-> Fonctionnement du \emph{Keepalive}:\\
+        \only<2->{\tt\scriptsize
+          > \textcolor{red}{GET / HTTP/1.0}\\
+          > ... {\sf\it en-têtes}\\
+          > Connection: Keep-Alive\\
+          > ... \\
+          < HTTP/1.0 200 OK\\
+          < ... \\
+          > \textcolor{red}{GET /abcd.pdf HTTP/1.0}\\
+          > ...
+        }
+      \item<3-> Défense: implémentation complète du protocole (long).
+    \end{itemize}
   \end{frame}
 
   \begin{frame}[t]
     \frametitle{Contournement par non-respect du protocole}
-    Idée: utiliser des \emph{flavor} peu-connues ou des tolérances du protocole.
-    % Par exemple utiliser "GET <url>\n"
+    Idée: utiliser des \emph{flavor} peu connues ou des tolérances du protocole.
+    \begin{itemize}
+      \item<1-> En HTTP, la \emph{Response-Line} a la forme:\\
+        {\tt\small HTTP/<version> <status-code> <reason-phrase>} \\
+        {\scriptsize Par exemple: {\tt HTTP/1.1 404 Not Found}}
+      \item<1-> Un détecteur pas trop naïf (l7-filter) utilise:\\
+        {\tt\small "HTTP/(0$\backslash$.9|1$\backslash$.0|1$\backslash$.1) [1-5][0-9][0-9] "}
+      \item<2-> Mais, dans une vieille version d'HTTP parlée par Apache:\\
+        {\tt\scriptsize
+          > GET /abcd.pdf\\
+          < \textcolor{red}{\em content}
+        }
+      \item<3-> Défense: implémanter \emph{toutes} les versions du protocole (très fastidieux !)
+    \end{itemize}
   \end{frame}
 
   \begin{frame}[t]
     \frametitle{Attaque \emph{Denial of Service} classique}
     Idée: exploiter les implémentations naïves du protocole.
+    \begin{itemize}
+      \item<1-> La plupart des procoles sont \emph{human readable}.
+      \item<1-> D'où une utilisation des \emph{lignes} ($\backslash$r, $\backslash$n).
+      \item<2-> D'où l'utilisation de buffer de ligne dans le filtre.
+      \item<3-> Attaque: des lignes longues (> 64ko).
+      \item<3-> Risques: buffer overflow (\emph{SIGSEGV} au mieux), memory exhaustion (\emph{oom-killer} sous linux).
+      \item<4-> Défense: programmation très minutieuse, arrêt de la détection après quelques \emph{ko} échangés.
+    \end{itemize}
   \end{frame}

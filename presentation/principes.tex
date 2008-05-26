@@ -1,8 +1,80 @@
 \section<presentation>[Principes et risques]{Les principes et les risques du filtrage}
   \begin{frame}
-    \frametitle{blïh ?}
-      1) les principes et les risques du filtrage (détection correcte du
-      protocole, extraction des urls, les attaques de bypass (fragmentation,
-      re-ordonnancement, utilisation de /flavor/ non standard du protocole),
-      résistence aux attaques DoS).
+    \frametitle{Contexte: un filtre transparent}
+    \begin{itemize}
+      \item<1> Filtrer du traffic (web) sans toucher aux connexions TCP.
+        % image filter-before.png
+      \item<2> Filtrer du traffic (web) sans toucher aux connexions TCP.
+        % image filter-after.png
+      \item<3-> Cas d'école: appliquer des règles de QoS restrictives sur les fichiers {\tt .pdf}.
+      \item<4-> Hypothèse: l'un des coté est neutre (pas de complicité).
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Fonctionnement d'un filtre applicatif}
+    Fonctionnement d'un filtre transparent au niveau 7 (OSI):
+    \begin{itemize}
+      \item Identification et groupage des packets par session TCP.\\
+          {\tt\small [tcp src=129.104.201.51 dst=87.98.164.72 sport=4242 dport=80]} ou \\
+          {\tt\small [tcp src=87.98.164.72 dst=129.104.201.51 sport=80 dport=4242]}
+      \item Extraction du contenu des buffers egress/ingress.\\
+        {\tt\small > GET /abcd.pdf HTTP/1.0}\\
+        {\tt\small > Host: www.blih.org}\\
+        {\tt\small > }\\
+        {\tt\small < HTTP/1.1 200 OK}\\
+        ...
+      \item Détection du protocole utilisé.
+      \item Extraction des information (protocol buffer).\\
+        {\tt\small proto=HTTP, method=GET, url=/abcd.pdf}
+      \item Classification finale.\\
+        Exemple de règle: {\tt\small proto=HTTP method=GET url=.*\.pdf}
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Attaques et contournement d'un filtre applicatif}
+    \begin{itemize}
+      \item Contournement par fragmentation des paquets
+      \item Contournement par ré-arrangement des paquets TCP
+      \item Contournement par exploitation du protocole
+      \item Contournement par leurre du détecteur de protocole
+      \item Contournement par non-respect du protocole
+      \item Attaque \emph{Denial of Service} classique
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Contournement par fragmentation des paquets}
+    Idée: utiliser le protocole IP pour casser ``l'atomicité'' des échanges.
+    % FRAG flag, ou paquets à payload réduit.
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Contournement par ré-arrangement des paquets TCP}
+    Idée: changer l'ordre des paquets TCP pour obfusquer le buffer \emph{egress}.
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Contournement par exploitation du protocole}
+    Idée: exploiter des fonctionnalités obscures (ou pas) du protocole.
+    % Keepalive
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Contournement par leurre du détecteur de protocole}
+    Idée: comettre des erreurs récupérables de nature à leurrer le détecteur.
+    % Commencer par une erreur en SMTP pour éviter le EHLO.
+    % Utiliser des lignes de requete extremement longues, type /././././.....
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Contournement par non-respect du protocole}
+    Idée: utiliser des \emph{flavor} peu-connues ou des tolérances du protocole.
+    % Par exemple utiliser "GET <url>\n"
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Attaque \emph{Denial of Service} classique}
+    Idée: exploiter les implémentations naïves du protocole.
   \end{frame}

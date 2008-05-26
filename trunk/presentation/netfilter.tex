@@ -1,6 +1,64 @@
 \section<presentation>[NetFilter]{Fonctionnement de NetFilter}
   \begin{frame}
-    \frametitle{blïh ?}
-      2) Les principes de NetFilter et d'iptables, et comment l'étendre (en
-      gros la partie 2 du rapprot)
+    \frametitle{Architecture Générale}
+    \begin{figure}
+      \includegraphics[scale=0.7]{pictures/netfilter.png}
+    \end{figure}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Iptables: Principes}
+    Fonctions: Regrouper en tables des règles de filtrage et de
+    modification de paquets IP.
+
+    \begin{center}
+      \begin{tabular}{|l|l|}
+	\hline
+	\textbf{Table} & \textbf{Hooks} \\
+	\hline
+	filter & INPUT, OUTPUT, FORWARD \\
+	\hline
+	nat & PREROUTING, POSTROUTING \\
+	\hline
+	mangle & Toutes \\
+	\hline
+      \end{tabular}
+    \end{center}
+
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Iptables: Exemples}
+    \begin{itemize}
+    \item Filter: \\ 
+      \textrm{iptables -t filter -A INPUT -p tcp --dport 80 -j DROP}
+    \item Nat: \\
+      \textrm{iptables -t nat -A POSTROUTING -d ! 192.168.0.0/24 -j
+      SNAT --to-source 81.57.230.21}
+    \item Mangle: \\
+      \textrm{iptables -t mangle -A POSTROUTING -p udp --dport 53 -j TOS --set-tos 16}
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Conntrack}
+    Principe: 
+    \begin{itemize}
+    \item Regrouper les paquets en flux à partir des triplets (IP
+    source, port source, port destination)
+    \item Associer à chaque flux un état: NEW, ESTABLISHED, RELATED
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Extension de Netfilter}
+    Plusieurs niveaux:
+    \begin{itemize}
+    \item Module noyau qui se branche directement sur un hook
+    netfilter avec une extension iptables correspondante
+    \item Application userspace. On utilise la cible \textrm{NFQUEUE}
+    qui déplace un paquet de la mémoire noyau vers une file dans la
+    mémoire userspace. Les paquets peuvent alors être traités par une
+    application locale avant d'être reinjectés dans Netfilter.
+    \end{itemize}
   \end{frame}

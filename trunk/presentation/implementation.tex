@@ -1,27 +1,10 @@
 \section<presentation>[Implémentation]{Implémentation}
   \begin{frame}
-    \frametitle{Organisation du programme}
-      Le programme contient :
-      \begin{itemize}
-        \item un \texttt{README} très complet ;
-        \item un répertoire base, regroupant plusieurs librairies externes (sous licences compatibles GPLv2) ;
-        \item un fichier de configuration ;
-        \item \texttt{queue.h/cc}, \texttt{packet.h/cc} et \texttt{conntrack.h/cc} qui réalisent l'interception des paquets envoyés à
-        \texttt{NFQUEUE} (\texttt{queue.cc}), leur interprétation (\texttt{packet.cc}), et leur mise en relation avec un conntrack
-        (\texttt{conntrack.cc}) ;
-        \item \texttt{classifier.h/cc} qui sert à classer les paquets ;
-        \item un fichier de base permettant le lancement des threads, un autre parsant le fichier de configuration et
-        initialisant le classifier.
-      \end{itemize}
-  \end{frame}
-
-  \begin{frame}
     \frametitle{Fonctionnement du logiciel}
       \begin{itemize}
-        \item<1-> Regrouper les paquets appartenant à une même connexion, grâce à l'utilisation de
-        \texttt{libnetfilter\_conntrack};
+        \item<1-> Regrouper les paquets appartenant à une même connexion, grâce à \texttt{libnetfilter\_conntrack};
         \item<2-> Déterminer si le contenu de la connexion correspond à un protocole supporté;
-        \item<3-> Extraire la méthode et l'url utilisées par le client des paquets;
+        \item<3-> Extraire la méthode et l'url utilisées;
         \item<4-> Classifier et remonter l'information au noyau.
       \end{itemize}
   \end{frame}
@@ -33,6 +16,22 @@
         \includegraphics[width=\textwidth]{schema2.png}\\
         \title{Fonctionnement du module}
       \end{figure}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Organisation du programme}
+      Le programme contient :
+      \begin{itemize}
+        \item un \texttt{README} très complet;
+        \item un répertoire base, regroupant plusieurs librairies externes;
+        \item un fichier de configuration;
+        \item \texttt{queue.h/cc}, \texttt{packet.h/cc} et \texttt{conntrack.h/cc} qui réalisent l'interception des paquets envoyés à
+        \texttt{NFQUEUE} (\texttt{queue.cc}), leur interprétation (\texttt{packet.cc}), et leur mise en relation avec un conntrack
+        (\texttt{conntrack.cc});
+        \item \texttt{classifier.h/cc} pour classer les paquets;
+        \item un fichier de base permettant le lancement des threads, un autre parsant le fichier de configuration et
+        initialisant le classifier.
+      \end{itemize}
   \end{frame}
 
   \begin{frame}

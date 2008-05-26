@@ -51,7 +51,7 @@
   \end{frame}
 
   \begin{frame}
-    \frametitle{Extension de Netfilter}
+    \frametitle{Extension de NetFilter}
     Plusieurs niveaux:
     \begin{itemize}
     \item Module noyau qui se branche directement sur un hook
@@ -59,7 +59,7 @@
     \item Application userspace. On utilise la cible \textrm{NFQUEUE}
     qui déplace un paquet de la mémoire noyau vers une file dans la
     mémoire userspace. Les paquets peuvent alors être traités par une
-    application locale avant d'être reinjectés dans Netfilter.
+    application locale avant d'être reinjectés dans NetFilter.
     \end{itemize}
   \end{frame}
 
@@ -75,7 +75,7 @@
     \end{itemize}
     Mais: 
     \begin{itemize}
-    \item perte de performances due à la copie de la totalité des
+    \item Perte de performances due à la copie de la totalité des
     paquets IP concernés de la mémoire noyau vers la mémoire userspace
     et vice-versa.
     \end{itemize}

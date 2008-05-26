@@ -62,3 +62,28 @@
     application locale avant d'être reinjectés dans Netfilter.
     \end{itemize}
   \end{frame}
+
+
+  \begin{frame}
+    \frametitle{Notre choix}
+    Application Userspace car:
+    \begin{itemize}
+    \item Développement simplifiée et accès à des librairies
+    puissantes (notamment pour la gestion d'expression régulières).
+    \item Pas de plantage système en cas de plantage de l'application
+    \item Minimisation de l'impact d'une faille de sécurité éventuelle.
+    \end{itemize}
+    Mais: 
+    \begin{itemize}
+    \item perte de performances due à la copie de la totalité des
+    paquets IP concernés de la mémoire noyau vers la mémoire userspace
+    et vice-versa.
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Principe général de notre solution}
+    \begin{figure}
+      \includegraphics[scale=0.13]{pictures/schema1.png}
+    \end{figure}
+  \end{frame}

@@ -13,7 +13,7 @@
             \includegraphics[width=0.8\textwidth]{pictures/filter-after.png}
           \end{figure}
         }
-      \item<3-> Cas d'école: appliquer des règles de QoS restrictives sur les fichiers {\tt .pdf}.
+      \item<3-> Cas d'école: appliquer des règles de QoS restrictives sur les fichiers {\tt .iso}.
       \item<4-> Hypothèse: l'un des coté est neutre (pas de complicité).
     \end{itemize}
   \end{frame}
@@ -45,6 +45,10 @@
           Exemple de règle: {\tt\scriptsize proto=HTTP method=GET url=.*$\backslash$.pdf}
         }
     \end{itemize}
+    \vspace{2em}
+    \only<6>{
+      Produit existant: \emph{l7-filter} (extension netfilter/iptables).
+    }
   \end{frame}
 
   \begin{frame}
@@ -77,7 +81,7 @@
           Original: {\tt "GET /abcd.pdf HTTP/1.0"}\\
           Modifié:  {\tt "GE" "T /abcd.pdf HTT" "P/1.0"}
         }
-      \item<3-> Défense: utilisation de buffers egress/ingress pour la session TCP.
+      \item<3-> Défense: utilisation de tampons egress/ingress pour la session TCP.
     \end{itemize}
   \end{frame}
 
@@ -102,7 +106,11 @@
           > pkt=3, payload="P/1.0"\\
           > pkt=2, payload="T /abcd.pdf HTT"
         }
-      \item<4-> Défense: rearrangement manuel, complexe, coûteux.
+      \item<4-> Résultat sur un filtre à tampon naïf:\\
+        {\tt\scriptsize
+          > GEP/1.0T /abcd.pdf HTT
+        }
+      \item<4-> Défense: réordonnancement manuel (complexe, coûteux).
     \end{itemize}
   \end{frame}
 
@@ -130,17 +138,17 @@
     \frametitle{Contournement par non-respect du protocole}
     Idée: utiliser des \emph{flavor} peu connues ou des tolérances du protocole.
     \begin{itemize}
-      \item<1-> En HTTP, la \emph{Response-Line} a la forme:\\
+      \item<1-> En http, la \emph{Response-Line} a la forme:\\
         {\tt\small HTTP/<version> <status-code> <reason-phrase>} \\
         {\scriptsize Par exemple: {\tt HTTP/1.1 404 Not Found}}
       \item<1-> Un détecteur pas trop naïf (l7-filter) utilise:\\
         {\tt\small "HTTP/(0$\backslash$.9|1$\backslash$.0|1$\backslash$.1) [1-5][0-9][0-9] "}
-      \item<2-> Mais, dans une vieille version d'HTTP parlée par Apache:\\
+      \item<2-> Mais, dans une vieille version d'http parlée par Apache:\\
         {\tt\scriptsize
           > GET /abcd.pdf\\
           < \textcolor{red}{\em content}
         }
-      \item<3-> Défense: implémanter \emph{toutes} les versions du protocole (très fastidieux !)
+      \item<3-> Défense: implémenter \emph{toutes} les versions du protocole (très fastidieux, risque de faux-positifs)
     \end{itemize}
   \end{frame}
 
@@ -148,11 +156,11 @@
     \frametitle{Attaque \emph{Denial of Service} classique}
     Idée: exploiter les implémentations naïves du protocole.
     \begin{itemize}
-      \item<1-> La plupart des procoles sont \emph{human readable}.
+      \item<1-> La plupart des protocoles sont \emph{human readable}.
       \item<1-> D'où une utilisation des \emph{lignes} ($\backslash$r, $\backslash$n).
       \item<2-> D'où l'utilisation de buffer de ligne dans le filtre.
-      \item<3-> Attaque: des lignes longues (> 64ko).
-      \item<3-> Risques: buffer overflow (\emph{SIGSEGV} au mieux), memory exhaustion (\emph{oom-killer} sous linux).
+      \item<3-> Attaque: des lignes longues ($>>$ taille d'un paquet).
+      \item<3-> Risques: buffer overflow (\emph{SIGSEGV} au mieux), memory exhaustion (\emph{oom-killer} sous linux), filter bypass.
       \item<4-> Défense: programmation très minutieuse, arrêt de la détection après quelques \emph{ko} échangés.
     \end{itemize}
   \end{frame}
